@@ -1,1 +1,3 @@
 /loginapp/__pycache__
+/.idea
+loginapp/connect.py
