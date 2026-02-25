@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}EcoCleanUp Hub - Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 text-center">
+        <h1 class="display-4 fw-bold text-success mt-5 mb-4">
+            <i class="bi bi-leaf-fill me-2"></i>Welcome to EcoCleanUp Hub
+        </h1>
+        
+        <p class="lead text-muted mb-5">
+            Join community clean-up actions and help protect Canterbury's natural environment!<br>
+            Browse upcoming clean-up events, register to participate, track your contributions, and make our region cleaner and greener together.
+        </p>
+
+        {% if not session.user_id %}
+        <div class="mb-5">
+            <a href="{{ url_for('register') }}" class="btn btn-lg btn-success me-3">
+                <i class="bi bi-person-plus me-2"></i>Register as Volunteer
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-lg btn-outline-success">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Log In
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Upcoming events reminder (shown only to logged-in volunteers) -->
+        {% if upcoming and upcoming|length > 0 %}
+        <div class="card border-success shadow-sm mb-5">
+            <div class="card-header bg-success-subtle text-success fw-bold">
+                <i class="bi bi-bell-fill me-2"></i>Upcoming Events Reminder
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for event in upcoming %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ event.event_name }}</strong><br>
+                            <small class="text-muted">
+                                {{ event.event_date.strftime('%Y-%m-%d') }} {{ event.start_time.strftime('%H:%M') }} 
+                                · {{ event.location }}
+                            </small>
+                        </div>
+                        <span class="badge bg-success rounded-pill">Upcoming</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% elif session.role == 'volunteer' %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle me-2"></i>You have no upcoming events yet. 
+            <a href="{{ url_for('events') }}" class="alert-link">Browse events</a> and register now!
+        </div>
+        {% endif %}
+
+        <!-- Platform highlights / call-to-action cards -->
+        <div class="row g-4 mt-5">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people-fill display-4 text-success mb-3"></i>
+                        <h5 class="card-title">Community Participation</h5>
+                        <p class="card-text text-muted">Hundreds of volunteers are already helping clean beaches, parks, and riverbanks.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-recycle display-4 text-success mb-3"></i>
+                        <h5 class="card-title">Environmental Impact</h5>
+                        <p class="card-text text-muted">Thousands of rubbish bags collected, protecting local ecosystems and wildlife.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-tree-fill display-4 text-success mb-3"></i>
+                        <h5 class="card-title">Planting & Restoration</h5>
+                        <p class="card-text text-muted">Planting native trees and restoring damaged natural habitats.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

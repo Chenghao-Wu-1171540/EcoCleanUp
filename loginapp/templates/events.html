@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Clean-up Events{% endblock %}
+
+{% block content %}
+<h2 class="mb-4 text-success"><i class="bi bi-search me-2"></i>Browse Upcoming Clean-up Events</h2>
+
+<!-- Filter form -->
+<form method="GET" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-5">
+            <input type="text" name="location" class="form-control" placeholder="Search location (e.g. Sumner, Rolleston)" value="{{ search_location }}">
+        </div>
+        <div class="col-md-4">
+            <input type="date" name="date" class="form-control" value="{{ search_date }}">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-filter me-2"></i>Filter
+            </button>
+        </div>
+    </div>
+</form>
+
+{% if events|length == 0 %}
+<div class="alert alert-info">
+    No events match your current filters. Try adjusting the criteria or check back later.
+</div>
+{% else %}
+<div class="row g-4">
+    {% for event in events %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm border-success-subtle">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ event.event_name }}</h5>
+                <p class="card-text">
+                    <i class="bi bi-geo-alt-fill me-1"></i> {{ event.location }}<br>
+                    <i class="bi bi-calendar-event me-1"></i> {{ event.event_date.strftime('%Y-%m-%d') }} {{ event.start_time.strftime('%H:%M') }}<br>
+                    <i class="bi bi-clock me-1"></i> Duration: {{ event.duration }} minutes<br>
+                    <i class="bi bi-person-fill me-1"></i> Organiser: {{ event.leader_name }}
+                </p>
+                
+                {% if event.registered %}
+                <span class="badge bg-success">Registered</span>
+                {% else %}
+                <form action="{{ url_for('register_event', event_id=event.event_id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-check-circle me-1"></i>Register
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light small text-muted">
+                <i class="bi bi-info-circle me-1"></i> {{ event.description|truncate(80) }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
