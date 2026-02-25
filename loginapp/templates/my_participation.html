@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}My Participation - EcoCleanUp Hub{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4 text-success">
+    <i class="bi bi-calendar-check me-2"></i>My Participation
+</h2>
+
+{% if registrations|length == 0 %}
+    <div class="alert alert-info">
+        You have not registered for any events yet.<br>
+        <a href="{{ url_for('events') }}" class="alert-link">Browse upcoming clean-up events →</a>
+    </div>
+{% else %}
+
+    <div class="row g-4">
+        {% for reg in registrations %}
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100 border-{% if reg.attendance == 'attended' %}success{% elif reg.attendance == 'absent' %}danger{% else %}warning{% endif %}">
+                <div class="card-header {% if reg.attendance == 'attended' %}bg-success-subtle text-success{% elif reg.attendance == 'absent' %}bg-danger-subtle text-danger{% else %}bg-warning-subtle text-warning{% endif %}">
+                    <strong>{{ reg.event_name }}</strong>
+                    {% if reg.attendance == 'attended' %}
+                        <span class="badge bg-success float-end">Attended</span>
+                    {% elif reg.attendance == 'absent' %}
+                        <span class="badge bg-danger float-end">Absent</span>
+                    {% else %}
+                        <span class="badge bg-warning float-end">Pending</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <i class="bi bi-geo-alt-fill me-1"></i> {{ reg.location }}<br>
+                        <i class="bi bi-calendar-event me-1"></i> {{ reg.event_date | strftime('%Y-%m-%d') }} 
+                        <small>{{ reg.start_time | strftime('%H:%M') }}</small><br>
+                        <i class="bi bi-clock me-1"></i> Duration: {{ reg.duration }} minutes
+                    </p>
+
+                    {% if reg.feedback_submitted %}
+                    <div class="alert alert-light small mb-2">
+                        <strong>Your feedback:</strong> {{ reg.rating }}/5 – {{ reg.comments|truncate(120) }}
+                    </div>
+                    {% elif reg.attendance == 'attended' and reg.event_date < today %}
+                        <a href="{{ url_for('submit_feedback', event_id=reg.event_id) }}" 
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-star-fill me-1"></i>Submit Feedback
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light small">
+                    Registered on: {{ reg.registered_at | strftime('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock %}

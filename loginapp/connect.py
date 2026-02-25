@@ -32,7 +32,7 @@ dbuser = 'postgres'  # PUT YOUR USERNAME HERE - usually "root"
 dbpass = 'wuwu3839'  # PUT YOUR PASSWORD HERE
 dbhost = 'localhost'
 dbport = 5432
-dbname = 'loginexample'
+dbname = 'ecocleanup'
 
 # dbuser = 'chenghao_wu'  # PUT YOUR USERNAME HERE - usually "root"
 # dbpass = 'WONk1x%q*G(0ru&E'  # PUT YOUR PASSWORD HERE

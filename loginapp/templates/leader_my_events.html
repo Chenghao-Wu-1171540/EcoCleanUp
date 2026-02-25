@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}My Events - EcoCleanUp Hub{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4 text-success">
+    <i class="bi bi-list-check me-2"></i>My Organised Events
+</h2>
+
+<a href="{{ url_for('create_event') }}" class="btn btn-success mb-4">
+    <i class="bi bi-plus-circle me-1"></i>Create New Clean-up Event
+</a>
+
+{% if events|length == 0 %}
+    <div class="alert alert-info">
+        You have not created any events yet.
+    </div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-success">
+                <tr>
+                    <th>Event Name</th>
+                    <th>Date & Time</th>
+                    <th>Location</th>
+                    <th>Registrations</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.event_name }}</td>
+                    <td>
+                        {{ event.event_date | strftime('%Y-%m-%d') }}<br>
+                        <small>{{ event.start_time | strftime('%H:%M') }}</small>
+                    </td>
+                    <td>{{ event.location }}</td>
+                    <td>{{ event.reg_count or 0 }}</td>
+                    <td>
+                        {% if event.event_date > today %}
+                            <span class="badge bg-primary">Upcoming</span>
+                        {% elif event.event_date == today %}
+                            <span class="badge bg-warning">Today</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Past</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('event_detail_leader', event_id=event.event_id) }}" 
+                           class="btn btn-sm btn-outline-primary">Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% endblock %}
