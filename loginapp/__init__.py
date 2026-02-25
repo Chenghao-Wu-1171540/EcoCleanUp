@@ -18,9 +18,9 @@ from loginapp.db import init_db, get_db
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production-2026'
-app.config['UPLOAD_FOLDER'] = 'static/profile_images'
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'profile_images')
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 MB
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB
 
 bcrypt = Bcrypt(app)
 init_db(app)  # loads connect.py params into app.config
@@ -61,6 +61,8 @@ def role_required(*roles):
 @app.route('/')
 def home():
     upcoming = []
+    show_reminder = False
+
     if 'user_id' in session and session.get('role') == 'volunteer':
         conn = get_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -71,13 +73,16 @@ def home():
             WHERE er.volunteer_id = %s
               AND e.event_date >= CURRENT_DATE
             ORDER BY e.event_date, e.start_time
-            LIMIT 3
+            LIMIT 5   -- limit 5 modal too long
         """, (session['user_id'],))
         upcoming = cur.fetchall()
         cur.close()
 
-    return render_template('home.html', upcoming=upcoming)
+        show_reminder = len(upcoming) > 0
 
+    return render_template('home.html',
+                          upcoming=upcoming,
+                          show_reminder=show_reminder)
 
 # ────────────────────────────────────────────────
 # LOGIN
@@ -640,6 +645,118 @@ def admin_reports():
     cur.close()
 
     return render_template('admin_reports.html', stats=stats, recent_events=recent_events)
+
+# ────────────────────────────────────────────────
+# LEADER - EVENT DETAIL (包含查看报名者、记录成果、查看反馈)
+# ────────────────────────────────────────────────
+@app.route('/leader/event/<int:event_id>')
+@login_required
+@role_required('event_leader')
+def event_detail_leader(event_id):
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # 获取事件基本信息 + 确认是自己创建的
+    cur.execute("""
+        SELECT e.*, u.full_name AS leader_name
+        FROM events e
+        JOIN users u ON e.event_leader_id = u.user_id
+        WHERE e.event_id = %s AND e.event_leader_id = %s
+    """, (event_id, session['user_id']))
+    event = cur.fetchone()
+
+    if not event:
+        flash('Event not found or you do not have permission', 'danger')
+        cur.close()
+        return redirect(url_for('leader_my_events'))
+
+    # 1. 报名志愿者列表
+    cur.execute("""
+        SELECT u.user_id, u.username, u.full_name, u.email, u.contact_number,
+               er.registered_at, er.attendance
+        FROM eventregistrations er
+        JOIN users u ON er.volunteer_id = u.user_id
+        WHERE er.event_id = %s
+        ORDER BY er.registered_at
+    """, (event_id,))
+    registrations = cur.fetchall()
+
+    # 2. 成果记录（如果已存在）
+    cur.execute("SELECT * FROM eventoutcomes WHERE event_id = %s", (event_id,))
+    outcome = cur.fetchone()
+
+    # 3. 反馈列表
+    cur.execute("""
+        SELECT f.rating, f.comments, f.submitted_at, u.full_name AS volunteer_name
+        FROM feedback f
+        JOIN users u ON f.volunteer_id = u.user_id
+        WHERE f.event_id = %s
+        ORDER BY f.submitted_at DESC
+    """, (event_id,))
+    feedbacks = cur.fetchall()
+
+    cur.close()
+
+    today = datetime.now().date()
+
+    return render_template('event_detail_leader.html',
+                           event=event,
+                           registrations=registrations,
+                           outcome=outcome,
+                           feedbacks=feedbacks,
+                           today=today)
+
+# ────────────────────────────────────────────────
+# LEADER - RECORD EVENT OUTCOME (POST only)
+# ────────────────────────────────────────────────
+@app.route('/leader/event/<int:event_id>/record_outcome', methods=['POST'])
+@login_required
+@role_required('event_leader')
+def record_outcome(event_id):
+    conn = get_db()
+    cur = conn.cursor()
+
+    # 确认权限
+    cur.execute("SELECT event_leader_id FROM events WHERE event_id = %s", (event_id,))
+    if not cur.fetchone() or cur.fetchone()['event_leader_id'] != session['user_id']:
+        flash('Permission denied', 'danger')
+        cur.close()
+        return redirect(url_for('leader_my_events'))
+
+    num_attendees = request.form.get('num_attendees', type=int)
+    bags_collected = request.form.get('bags_collected', type=int)
+    recyclables_sorted = request.form.get('recyclables_sorted', type=int)
+    other_achievements = request.form.get('other_achievements')
+
+    try:
+        # 先检查是否已存在记录
+        cur.execute("SELECT outcome_id FROM eventoutcomes WHERE event_id = %s", (event_id,))
+        existing = cur.fetchone()
+
+        if existing:
+            # 更新
+            cur.execute("""
+                UPDATE eventoutcomes
+                SET num_attendees = %s, bags_collected = %s, recyclables_sorted = %s,
+                    other_achievements = %s, recorded_at = CURRENT_TIMESTAMP
+                WHERE event_id = %s
+            """, (num_attendees, bags_collected, recyclables_sorted, other_achievements, event_id))
+        else:
+            # 新增
+            cur.execute("""
+                INSERT INTO eventoutcomes (event_id, num_attendees, bags_collected,
+                                          recyclables_sorted, other_achievements)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (event_id, num_attendees, bags_collected, recyclables_sorted, other_achievements))
+
+        conn.commit()
+        flash('Event outcomes recorded successfully', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash('Error saving outcomes', 'danger')
+
+    cur.close()
+    return redirect(url_for('event_detail_leader', event_id=event_id))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

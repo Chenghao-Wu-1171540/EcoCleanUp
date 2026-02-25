@@ -31,25 +31,31 @@
                 </div>
                 <div class="card-body">
                     <p class="mb-2">
-                        <i class="bi bi-geo-alt-fill me-1"></i> {{ reg.location }}<br>
-                        <i class="bi bi-calendar-event me-1"></i> {{ reg.event_date | strftime('%Y-%m-%d') }} 
-                        <small>{{ reg.start_time | strftime('%H:%M') }}</small><br>
-                        <i class="bi bi-clock me-1"></i> Duration: {{ reg.duration }} minutes
+                        <i class="bi bi-geo-alt-fill me-1"></i> {{ reg.location or 'N/A' }}<br>
+                        <i class="bi bi-calendar-event me-1"></i>
+                        {{ reg.event_date.strftime('%Y-%m-%d') if reg.event_date else 'N/A' }}
+                        <small>
+                            {{ reg.start_time.strftime('%H:%M') if reg.start_time else 'N/A' }}
+                        </small><br>
+                        <i class="bi bi-clock me-1"></i> Duration: {{ reg.duration or 'N/A' }} minutes
                     </p>
 
                     {% if reg.feedback_submitted %}
                     <div class="alert alert-light small mb-2">
-                        <strong>Your feedback:</strong> {{ reg.rating }}/5 – {{ reg.comments|truncate(120) }}
+                        <strong>Your feedback:</strong>
+                        {{ reg.rating }}/5 –
+                        {{ reg.comments|truncate(120) if reg.comments else 'No comments provided' }}
                     </div>
-                    {% elif reg.attendance == 'attended' and reg.event_date < today %}
-                        <a href="{{ url_for('submit_feedback', event_id=reg.event_id) }}" 
+                    {% elif reg.attendance == 'attended' and reg.event_date and reg.event_date < today %}
+                        <a href="{{ url_for('submit_feedback', event_id=reg.event_id) }}"
                            class="btn btn-sm btn-outline-success">
                             <i class="bi bi-star-fill me-1"></i>Submit Feedback
                         </a>
                     {% endif %}
                 </div>
                 <div class="card-footer bg-light small">
-                    Registered on: {{ reg.registered_at | strftime('%Y-%m-%d %H:%M') }}
+                    Registered on:
+                    {{ reg.registered_at.strftime('%Y-%m-%d %H:%M') if reg.registered_at else 'N/A' }}
                 </div>
             </div>
         </div>

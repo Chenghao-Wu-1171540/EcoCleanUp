@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Event Detail - {{ event.event_name }}{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4 text-success">
+    <i class="bi bi-info-circle-fill me-2"></i>{{ event.event_name }}
+</h2>
+
+<div class="row">
+    <!-- 事件基本信息 -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success-subtle text-success">
+                <h5 class="mb-0">Event Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Location:</strong> {{ event.location }}</p>
+                <p><strong>Date & Time:</strong> {{ event.event_date.strftime('%Y-%m-%d') }} 
+                    {{ event.start_time.strftime('%H:%M') }} ({{ event.duration }} minutes)</p>
+                <p><strong>Description:</strong> {{ event.description or 'No description' }}</p>
+                <p><strong>Supplies needed:</strong> {{ event.supplies or '-' }}</p>
+                <p><strong>Safety instructions:</strong> {{ event.safety_instructions or '-' }}</p>
+                <p><strong>Created by:</strong> {{ event.leader_name }}</p>
+            </div>
+        </div>
+
+        <!-- 报名志愿者列表 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success-subtle text-success d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Registered Volunteers ({{ registrations|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if registrations %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Contact</th>
+                                <th>Registered At</th>
+                                <th>Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in registrations %}
+                            <tr>
+                                <td>{{ reg.full_name }} (@{{ reg.username }})</td>
+                                <td>{{ reg.email }}</td>
+                                <td>{{ reg.contact_number or '-' }}</td>
+                                <td>{{ reg.registered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <span class="badge bg-{% if reg.attendance == 'attended' %}success{% elif reg.attendance == 'absent' %}danger{% else %}warning{% endif %}">
+                                        {{ reg.attendance | title }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    No volunteers registered yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 查看反馈 -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-success-subtle text-success">
+                <h5 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Feedback from Volunteers</h5>
+            </div>
+            <div class="card-body">
+                {% if feedbacks %}
+                <div class="list-group">
+                    {% for fb in feedbacks %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ fb.volunteer_name }}</strong>
+                            <span class="badge bg-warning text-dark">{{ fb.rating }} / 5</span>
+                        </div>
+                        <small class="text-muted">{{ fb.submitted_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        <p class="mt-2 mb-0">{{ fb.comments or 'No comments' }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3 text-muted">
+                    No feedback submitted yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：记录成果 -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm sticky-top" style="top: 1rem;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Record Event Outcomes</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('record_outcome', event_id=event.event_id) }}">
+                    <div class="mb-3">
+                        <label class="form-label">Number of Attendees</label>
+                        <input type="number" name="num_attendees" class="form-control" 
+                               value="{{ outcome.num_attendees or '' }}" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bags of Rubbish Collected</label>
+                        <input type="number" name="bags_collected" class="form-control" 
+                               value="{{ outcome.bags_collected or '' }}" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recyclables Sorted (items)</label>
+                        <input type="number" name="recyclables_sorted" class="form-control" 
+                               value="{{ outcome.recyclables_sorted or '' }}" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Other Achievements / Notes</label>
+                        <textarea name="other_achievements" class="form-control" rows="3">{{ outcome.other_achievements or '' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-save me-1"></i>Save Outcomes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('leader_my_events') }}" class="btn btn-outline-secondary mt-4">
+    <i class="bi bi-arrow-left me-1"></i>Back to My Events
+</a>
+
+{% endblock %}
