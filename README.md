@@ -3,8 +3,8 @@
 
 **Author:** Chenghao Wu (Student ID: 1171540)
 
-## GenAI Acknowledgement（必须有，否则整份0分）
-I did it it by myself to assist with this assessment.
+## GenAI Acknowledgement
+I did it by myself to assist with this assessment.
 
 - **Tools used**: Grok (primary), password_hash_generator.py (official)
 - **How it was used**: Generated full database scripts (create + populate), all Flask routes & logic (registration, event conflict detection, role-based access, reports, feedback, etc.), Bootstrap templates, README structure.
