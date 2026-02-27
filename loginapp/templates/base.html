@@ -14,204 +14,229 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <!-- Custom green eco theme + advanced animations -->
+    <!-- Custom theme: soft teal / ocean-inspired palette -->
     <style>
         :root {
-            --green-primary: #2e7d32;
-            --green-light: #4caf50;
-            --green-dark: #1b5e20;
-            --bg-light: #f5f8f5;
-            --glow-color: rgba(76, 175, 80, 0.6);
+            --primary:        #0a6c74;          /* main teal color */
+            --primary-dark:   #08545a;          /* darker hover state */
+            --primary-light:  #4db8c4;          /* lighter accent */
+            --bg-soft:        #f5fcfe;          /* very light cyan background */
+            --text-dark:      #1a3c40;
+            --text-muted:     #5f7a7d;
+            --shadow-sm:      0 4px 16px rgba(10, 108, 116, 0.08);
+            --shadow-md:      0 10px 32px rgba(10, 108, 116, 0.12);
         }
 
         body {
-            background-color: var(--bg-light);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
+            background-color: var(--bg-soft);
+            color: var(--text-dark);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
         }
 
+        /* Navbar styles */
         .navbar {
-            background-color: var(--green-primary) !important;
+            background: var(--primary) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
         }
-        .navbar-brand, .nav-link {
+
+        .navbar-brand,
+        .nav-link {
             color: white !important;
-        }
-        .nav-link:hover {
-            color: #e8f5e9 !important;
-        }
-        .badge {
-            font-size: 0.9rem;
-        }
-        footer {
-            background-color: var(--green-primary);
-            color: white;
-            padding: 1.5rem 0;
-            margin-top: 3rem;
+            font-weight: 500;
         }
 
-        /* ───────────── Advanced Animation Styles ───────────── */
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-light) !important;
+        }
 
-        /* Typewriter effect for titles (used with JS) */
-        .typewriter {
+        /* Main content area */
+        main {
+            padding-top: 5.5rem;           /* space for fixed navbar */
+            padding-bottom: 3rem;
+        }
+
+        @media (max-width: 991.98px) {
+            main {
+                padding-top: 5rem;
+            }
+        }
+
+        /* Card styles */
+        .card {
+            border: none;
+            border-radius: 1.25rem;
             overflow: hidden;
-            white-space: nowrap;
-            border-right: 0.15em solid var(--green-light);
-            animation: typing 3.5s steps(40, end) forwards, blink-caret 0.75s step-end infinite;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.28s ease;
         }
 
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
         }
 
-        @keyframes blink-caret {
-            from, to { border-color: transparent }
-            50% { border-color: var(--green-light); }
+        /* Button styles */
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 2rem;
+            padding: 0.65rem 1.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
-        /* 3D card tilt on hover */
-        .card-3d {
-            transition: all 0.4s ease;
-            transform-style: preserve-3d;
-            perspective: 1000px;
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: translateY(-1px);
         }
 
-        .card-3d:hover {
-            transform: translateY(-12px) rotateX(8deg) rotateY(8deg);
-            box-shadow: 0 25px 50px -12px rgba(46, 125, 50, 0.4);
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+            border-radius: 2rem;
         }
 
-        .card-3d::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
         }
 
-        .card-3d:hover::before {
-            opacity: 1;
+        /* Utility classes */
+        .text-primary       { color: var(--primary) !important; }
+        .bg-primary         { background-color: var(--primary) !important; }
+        .bg-primary-subtle  { background-color: rgba(10, 108, 116, 0.07) !important; }
+        .border-primary     { border-color: var(--primary) !important; }
+
+        /* Hero section (used on home page) */
+        .hero {
+            background: linear-gradient(135deg, #4db8c4 0%, #0a6c74 100%);
+            color: white;
+            padding: 6rem 1rem 4.5rem;
+            margin-bottom: 3rem;
+            border-radius: 0 0 2.5rem 2.5rem;
+            text-align: center;
         }
 
-        /* Gentle floating + glow for icons / titles */
-        @keyframes gentle-float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-12px) rotate(3deg); }
+        .hero h1 {
+            font-weight: 700;
+            letter-spacing: -0.8px;
         }
 
-        @keyframes pulse-glow {
-            0%, 100% { text-shadow: 0 0 15px var(--glow-color); }
-            50% { text-shadow: 0 0 35px var(--glow-color); }
+        .hero .lead {
+            max-width: 720px;
+            margin: 1.5rem auto 2.5rem;
+            opacity: 0.95;
         }
 
-        .animate-float-glow {
-            animation: gentle-float 8s ease-in-out infinite, pulse-glow 6s ease-in-out infinite;
+        /* Footer */
+        footer {
+            background: var(--primary);
+            color: white;
+            padding: 3rem 0 2rem;
+            margin-top: 5rem;
         }
 
-        /* Content fade-in from bottom */
-        .fade-in-section {
-            opacity: 0;
-            transform: translateY(60px);
-            transition: opacity 1.4s ease-out, transform 1.4s ease-out;
+        footer a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
         }
 
-        .fade-in-section.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Subtle breathing background with green particles feel */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(46, 125, 50, 0.09) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: -1;
-            animation: bg-breathe 28s ease-in-out infinite;
-        }
-
-        @keyframes bg-breathe {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.06); }
-        }
-
-        /* Optional very light particle dots (CSS only) */
-        .particle-bg {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: -2;
-            background: transparent;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(76, 175, 80, 0.4);
-            border-radius: 50%;
-            animation: float-particle linear infinite;
-        }
-
-        @keyframes float-particle {
-            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
-            50% { opacity: 0.7; }
-            100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+        footer a:hover {
+            color: white;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
-    <!-- Navigation bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
+    <!-- Fixed top navigation bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid px-4 px-lg-5">
             <a class="navbar-brand" href="{{ url_for('home') }}">
                 <i class="bi bi-leaf-fill me-2"></i>EcoCleanUp Hub
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto align-items-center gap-1 gap-lg-3">
                     {% if session.user_id %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('events') }}"><i class="bi bi-search me-1"></i>Browse Events</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('events') }}">Browse Events</a>
+                        </li>
+
                         {% if session.role == 'volunteer' %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('my_participation') }}"><i class="bi bi-calendar-check me-1"></i>My Participation</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('my_participation') }}">My Participation</a>
+                        </li>
                         {% endif %}
+
                         {% if session.role == 'event_leader' %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('leader_my_events') }}"><i class="bi bi-list-check me-1"></i>My Events</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('leader_my_events') }}">My Events</a>
+                        </li>
                         {% endif %}
+
                         {% if session.role == 'admin' %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_users') }}"><i class="bi bi-people me-1"></i>Manage Users</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_events') }}"><i class="bi bi-calendar-event me-1"></i>Manage Events</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_reports') }}"><i class="bi bi-bar-chart-line me-1"></i>Reports</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Admin
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">Manage Users</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_events') }}">Manage Events</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_reports') }}">Reports</a></li>
+                            </ul>
+                        </li>
                         {% endif %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}"><i class="bi bi-person-circle me-1"></i>Profile</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
+
+                        <li class="nav-item ms-lg-3">
+                            <a class="nav-link" href="{{ url_for('profile') }}">
+                                <i class="bi bi-person-circle me-1"></i> Profile
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
                     {% else %}
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('register') }}"><i class="bi bi-person-plus me-1"></i>Register</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a class="btn btn-primary btn-sm px-4 py-2" href="{{ url_for('register') }}">Register</a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Main content area -->
-    <main class="container my-5">
+    <!-- Optional hero section – child templates can override this block -->
+    {% block hero %}{% endblock %}
+
+    <!-- Main content area with responsive padding -->
+    <main class="container-fluid px-3 px-md-4 px-lg-5">
+        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="row justify-content-center mb-4">
+                    <div class="col-12 col-lg-10">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
@@ -221,21 +246,22 @@
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
-            <p class="mb-1">
+            <p class="mb-2">
                 <i class="bi bi-leaf me-1"></i> EcoCleanUp Hub – Community Cleanup Management System
             </p>
-            <p class="mb-0 small">
+            <p class="small mb-0">
                 © 2026 COMP639 Individual Assignment |
                 Developed by Chenghao Wu (Student ID: 1171540)
             </p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JS bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
 
+    <!-- Page-specific scripts block -->
     {% block scripts %}{% endblock %}
 </body>
 </html>
