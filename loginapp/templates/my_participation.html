@@ -4,64 +4,107 @@
 {% block content %}
 
 <div class="container mt-4">
-    <h2 class="mb-4 text-success">
-        <i class="bi bi-calendar-check-fill me-2"></i>My Participation
+    <!-- Page title -->
+    <h2 class="mb-4 text-success text-center text-md-start">
+        <i class="bi bi-calendar-check me-2"></i>My Participation
     </h2>
 
-    {% if registrations|length == 0 %}
-    <div class="alert alert-info text-center py-5">
-        <i class="bi bi-info-circle-fill me-2 fs-4"></i>
-        You haven't joined any events yet.<br>
-        <a href="{{ url_for('events.list_events') }}" class="alert-link">Browse upcoming events →</a>
-    </div>
-    {% else %}
-    <div class="row g-4">
-        {% for reg in registrations %}
-        <div class="col-12 col-lg-6">
-            <div class="card shadow-sm border-{% if reg.attendance == 'attended' %}success{% elif reg.attendance == 'absent' %}danger{% else %}warning{% endif %}">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong>{{ reg.event_name }}</strong>
-                    <span class="badge {% if reg.attendance == 'attended' %}bg-success{% elif reg.attendance == 'absent' %}bg-danger{% else %}bg-warning{% endif %}">
-                        {{ reg.attendance|title }}
-                    </span>
-                </div>
-                <div class="card-body">
-                    <p class="mb-2">
-                        <i class="bi bi-geo-alt me-1"></i>{{ reg.location or '—' }}
-                    </p>
-                    <p class="mb-2">
-                        <i class="bi bi-calendar-event me-1"></i>
-                        {{ reg.event_date.strftime('%Y-%m-%d') if reg.event_date else '—' }}
-                    </p>
-                    <p class="mb-3">
-                        <i class="bi bi-clock me-1"></i>
-                        {{ reg.start_time.strftime('%H:%M') if reg.start_time else '—' }}
-                    </p>
-
-                    {% if reg.feedback_submitted %}
-                    <div class="alert alert-light small mt-3 mb-0 border">
-                        <strong>Your Feedback:</strong><br>
-                        Rating: {{ reg.rating }}/5 <br>
-                        {{ reg.comments|truncate(120) or 'No comment provided' }}
+    <!-- Event list container -->
+    <div id="events-container" class="row g-4">
+        {% for event in events %}
+        <div class="col-12 col-md-6 col-lg-4 event-card">
+            <!-- Make entire card clickable to detail page -->
+            <a href="{{ url_for('events.my_event_detail', event_id=event.event_id) }}" class="text-decoration-none">
+                <div class="card h-100 shadow-sm border-success-subtle transition-all hover-lift position-relative">
+                    <!-- Status badge in top-right corner (small size) -->
+                    <div class="position-absolute top-0 end-0 m-2 z-10">
+                        {% if event.status == 'pending_attendance' %}
+                        <span class="badge bg-warning text-dark fs-7 px-2 py-1 rounded-pill shadow-sm">
+                            <i class="bi bi-hourglass-split me-1"></i>Pending
+                        </span>
+                        {% elif event.status == 'attended' %}
+                        <span class="badge bg-success fs-7 px-2 py-1 rounded-pill shadow-sm">
+                            <i class="bi bi-check-circle me-1"></i>Attended
+                        </span>
+                        {% else %}
+                        <span class="badge bg-info fs-7 px-2 py-1 rounded-pill shadow-sm">
+                            <i class="bi bi-calendar-event me-1"></i>Upcoming
+                        </span>
+                        {% endif %}
                     </div>
-                    {% elif reg.attendance == 'attended' and reg.event_date < today %}
-                    <a href="{{ url_for('user.submit_feedback', event_id=reg.event_id) }}"
-                       class="btn btn-sm btn-outline-success mt-3">
-                        <i class="bi bi-star-fill me-1"></i>Submit Feedback
-                    </a>
-                    {% endif %}
+
+                    <div class="card-body d-flex flex-column p-4">
+                        <h5 class="card-title text-success mb-3">{{ event.event_name }}</h5>
+
+                        <p class="mb-2">
+                            <i class="bi bi-geo-alt-fill me-1 text-muted"></i> {{ event.location }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-calendar-event me-1 text-muted"></i>
+                            {{ event.event_date.strftime('%Y-%m-%d') }}
+                        </p>
+                        <p class="mb-3">
+                            <i class="bi bi-clock me-1 text-muted"></i>
+                            {{ event.start_time.strftime('%H:%M') }} • {{ event.duration }} min
+                        </p>
+
+                        <!-- Your Feedback section at the bottom -->
+                        <div class="mt-3 pt-3 border-top border-success-subtle">
+                            <p class="text-muted mb-1 small fw-semibold">
+                                Your Feedback:
+                            </p>
+                            {% if event.has_feedback %}
+                            <p class="mb-2 text-success">
+                                <i class="bi bi-star-fill me-1"></i>Submitted
+                                {% if event.rating %}
+                                (Rating: {{ event.rating }}/5)
+                                {% endif %}
+                            </p>
+                            {% else %}
+                            <p class="mb-2 text-secondary">
+                                <i class="bi bi-star me-1"></i>Pending
+                            </p>
+                            {% endif %}
+
+                            <!-- Unregister button (only for upcoming/pending) -->
+                            {% if event.status != 'attended' %}
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 rounded-pill mt-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmUnregisterModal"
+                                    data-event-name="{{ event.event_name }}"
+                                    data-event-id="{{ event.event_id }}">
+                                <i class="bi bi-x-circle me-1"></i>Cancel Participation
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         {% endfor %}
     </div>
-    {% endif %}
 
-    <div class="text-center mt-5">
-        <a href="{{ url_for('events.list_events') }}" class="btn btn-outline-primary">
-            <i class="bi bi-search me-1"></i>Browse More Events
-        </a>
+    <!-- Loading indicator -->
+    <div id="loading" class="text-center my-5" style="display: none;">
+        <div class="spinner-border text-success" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-2">Loading more events...</p>
+    </div>
+
+    <!-- No more events -->
+    <div id="no-more" class="alert alert-info text-center py-4 my-5 rounded-4 shadow-sm" style="display: none;">
+        <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+        No more events to load.
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<!-- Your custom.js is already loaded in base.html -->
+<!-- If you want to add page-specific logic, you can put it here -->
+<script>
+    // Optional: Add any page-specific JS if needed
+</script>
 {% endblock %}

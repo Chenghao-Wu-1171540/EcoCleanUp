@@ -1,44 +1,44 @@
-// static/js/custom.js
-// Custom JavaScript for EcoCleanUp Hub
+// custom.js - Global custom JavaScript for EcoCleanUp Hub
 
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. 自动关闭 flash messages after 5 seconds
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            const closeBtn = alert.querySelector('.btn-close');
-            if (closeBtn) closeBtn.click();
-        }, 5000);
-    });
+    // Enable tooltips everywhere
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
-    // 2. Add smooth scroll to anchor links (if any)
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth'
-                });
-            }
-        });
-    });
 
-    // 3. Optional: Highlight active nav link
-    const currentPath = window.location.pathname;
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.getAttribute('href') === currentPath ||
-            link.getAttribute('href') === currentPath + '/') {
-            link.classList.add('active');
+    const unregisterButtons = document.querySelectorAll('[data-bs-target="#confirmUnregisterModal"]');
+    const modalEventName = document.getElementById('modalEventName');
+    const confirmBtn = document.getElementById('confirmUnregisterBtn');
+
+    document.addEventListener('click', function (e) {
+        const button = e.target.closest('[data-bs-target="#confirmUnregisterModal"]');
+        if (!button) return;
+
+        const eventName = button.getAttribute('data-event-name');
+        const eventId = button.getAttribute('data-event-id');
+
+        if (modalEventName) {
+            modalEventName.textContent = `"${eventName}"?`;
+        }
+
+        if (confirmBtn) {
+            confirmBtn.onclick = null;
+            confirmBtn.onclick = function () {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/unregister/${eventId}`;
+                // form.innerHTML = '<input type="hidden" name="csrf_token" value="' + document.querySelector('input[name=csrf_token]').value + '">';
+                document.body.appendChild(form);
+                form.submit();
+            };
         }
     });
+});
 
-    // 4. Confirm dialog for dangerous actions (e.g. cancel event)
-    document.querySelectorAll('[data-confirm]').forEach(el => {
-        el.addEventListener('click', function (e) {
-            if (!confirm(this.dataset.confirm)) {
-                e.preventDefault();
-            }
-        });
-    });
+
+window.addEventListener('scroll', function () {
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+        backToTop.style.display = window.scrollY > 300 ? 'block' : 'none';
+    }
 });

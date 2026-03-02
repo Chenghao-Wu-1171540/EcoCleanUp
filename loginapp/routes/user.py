@@ -7,7 +7,7 @@ import os
 import uuid
 from psycopg2.extras import RealDictCursor
 from ..db import get_db
-from ..utils.decorators import login_required
+from ..utils.decorators import login_required, role_required
 from ..utils.helpers import allowed_file
 
 user_bp = Blueprint('user', __name__)
@@ -94,28 +94,56 @@ def change_password():
     return render_template('change_password.html')
 
 
+
 @user_bp.route('/my_participation')
 @login_required
+@role_required('volunteer')
 def my_participation():
-    """Show user's event participation history"""
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
-        SELECT e.event_id, e.event_name, e.location, e.event_date, e.start_time,
-               er.attendance, f.rating, f.comments,
-               CASE WHEN f.feedback_id IS NOT NULL THEN TRUE ELSE FALSE END AS feedback_submitted
-        FROM eventregistrations er
-        JOIN events e ON er.event_id = e.event_id
+    page = request.args.get('page', 1, type=int)
+    per_page = 6
+    offset = (page - 1) * per_page
+
+    query = """
+        SELECT e.*, u.full_name AS leader_name,
+               er.attendance,
+               CASE 
+                   WHEN er.attendance IS NULL AND e.event_date < CURRENT_DATE THEN 'pending_attendance'
+                   WHEN er.attendance IS NOT NULL THEN 'attended'
+                   ELSE 'upcoming'
+               END AS status,
+               f.rating,
+               f.comments AS feedback_comment,  -- Changed from f.comment to f.comments (plural)
+               f.rating IS NOT NULL AS has_feedback
+        FROM events e
+        JOIN eventregistrations er ON e.event_id = er.event_id
+        JOIN users u ON e.event_leader_id = u.user_id
         LEFT JOIN feedback f ON e.event_id = f.event_id AND er.volunteer_id = f.volunteer_id
         WHERE er.volunteer_id = %s
         ORDER BY e.event_date DESC
-    """, (session['user_id'],))
-    registrations = cur.fetchall()
+        LIMIT %s OFFSET %s
+    """
+    cur.execute(query, (session['user_id'], per_page, offset))
+    events = cur.fetchall()
+
+    count_query = """
+        SELECT COUNT(*) AS total
+        FROM eventregistrations er
+        WHERE er.volunteer_id = %s
+    """
+    cur.execute(count_query, (session['user_id'],))
+    total_events = cur.fetchone()['total']
+
     cur.close()
 
-    today = date.today()
-    return render_template('my_participation.html', registrations=registrations, today=today)
+    has_more = len(events) == per_page
+
+    return render_template('my_participation.html',
+                           events=events,
+                           page=page,
+                           has_more=has_more)
 
 
 @user_bp.route('/submit_feedback/<int:event_id>', methods=['GET', 'POST'])

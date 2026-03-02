@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ event.event_name }} - My Participation{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <!-- Page title -->
+    <h2 class="mb-4 text-success">
+        <i class="bi bi-calendar-check me-2"></i>{{ event.event_name }}
+    </h2>
+
+    <div class="card shadow-lg border-success-subtle rounded-4 overflow-hidden">
+        <div class="card-body p-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="lead mb-4">
+                        <i class="bi bi-geo-alt-fill me-1"></i> {{ event.location }}
+                    </p>
+                    <p class="mb-3">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Date: {{ event.event_date.strftime('%Y-%m-%d') }}
+                    </p>
+                    <p class="mb-3">
+                        <i class="bi bi-clock me-1"></i>
+                        Time: {{ event.start_time.strftime('%H:%M') }} • Duration: {{ event.duration }} min
+                    </p>
+                    <p class="mb-4">
+                        <i class="bi bi-person-fill me-1"></i> Leader: {{ event.leader_name }}
+                    </p>
+
+                    <!-- Your Status -->
+                    <div class="mb-4">
+                        <h5 class="text-success">Your Status</h5>
+                        {% if event.attendance %}
+                        <span class="badge bg-success fs-5 px-4 py-2">
+                            <i class="bi bi-check-circle me-1"></i>Attended
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning fs-5 px-4 py-2">
+                            <i class="bi bi-hourglass-split me-1"></i>Upcoming / Pending Attendance
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Your Feedback -->
+                    <div class="mb-4">
+                        <h5 class="text-success">Your Feedback</h5>
+                        {% if event.has_feedback %}
+                        <p class="mb-1">
+                            <i class="bi bi-star-fill me-1 text-warning"></i>
+                            Rating: {{ event.rating }}/5
+                        </p>
+                        <p class="mb-0 text-muted">
+                            {{ event.feedback_comment or 'No comment provided.' }}
+                        </p>
+                        {% else %}
+                        <p class="text-secondary mb-0">
+                            <i class="bi bi-star me-1"></i>Pending - Please submit your feedback after the event.
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cancel Participation button (only if not attended) -->
+                    {% if event.status != 'attended' %}
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-outline-danger btn-lg rounded-pill w-100"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmUnregisterModal"
+                                data-event-name="{{ event.event_name }}"
+                                data-event-id="{{ event.event_id }}">
+                            <i class="bi bi-x-circle me-1"></i>Cancel Participation
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 text-center">
+                    <!-- Placeholder for image/map -->
+                    <div class="bg-success-subtle rounded-4 p-4 mb-3">
+                        <i class="bi bi-image fs-1 text-success"></i>
+                        <p class="mt-2 text-muted">Event Image / Map</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="{{ url_for('user.my_participation') }}" class="btn btn-outline-secondary btn-lg rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i>Back to My Participation
+        </a>
+    </div>
+</div>
+
+{% endblock %}

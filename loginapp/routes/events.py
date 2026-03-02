@@ -143,3 +143,70 @@ def register_event(event_id):
         cur.close()
 
     return redirect(url_for('events.list_events'))
+
+
+@events_bp.route('/my_event_detail/<int:event_id>')
+@login_required
+@role_required('volunteer')
+def my_event_detail(event_id):
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    query = """
+        SELECT e.*, u.full_name AS leader_name,
+               er.attendance,
+               f.rating,
+               f.comments AS feedback_comment,  
+               f.rating IS NOT NULL AS has_feedback
+        FROM events e
+        JOIN users u ON e.event_leader_id = u.user_id
+        JOIN eventregistrations er ON e.event_id = er.event_id
+        LEFT JOIN feedback f ON e.event_id = f.event_id AND er.volunteer_id = f.volunteer_id
+        WHERE e.event_id = %s AND er.volunteer_id = %s
+    """
+    cur.execute(query, (event_id, session['user_id']))
+    event = cur.fetchone()
+
+    if not event:
+        flash('Event not found or you are not registered for it.', 'danger')
+        return redirect(url_for('user.my_participation'))
+
+    cur.close()
+
+    return render_template('my_event_detail.html',
+                           event=event)
+
+@events_bp.route('/unregister/<int:event_id>', methods=['POST'])
+@login_required
+@role_required('volunteer')
+def unregister_event(event_id):
+    """Unregister current volunteer from an event"""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        cur.execute("""
+            SELECT 1 FROM eventregistrations 
+            WHERE event_id = %s AND volunteer_id = %s
+        """, (event_id, session['user_id']))
+        if not cur.fetchone():
+            flash('You are not registered for this event.', 'warning')
+            return redirect(url_for('user.my_participation'))
+
+        cur.execute("""
+            DELETE FROM eventregistrations 
+            WHERE event_id = %s AND volunteer_id = %s
+        """, (event_id, session['user_id']))
+
+        conn.commit()
+        flash('Successfully unregistered from the event.', 'success')
+
+    except Exception as e:
+        conn.rollback()
+        flash('Unregistration failed. Please try again.', 'danger')
+        print(f"Unregister error for event {event_id}: {e}")
+
+    finally:
+        cur.close()
+
+    return redirect(url_for('user.my_participation'))
