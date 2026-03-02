@@ -31,6 +31,7 @@ def login():
         if user and check_password_hash(user['password_hash'], password):
             session['user_id'] = user['user_id']
             session['role'] = user['role']
+            session['full_name'] = user['full_name']
             session.permanent = True
 
             flash('Login successful!', 'success')
