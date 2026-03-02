@@ -1,12 +1,43 @@
+/* ============================================= */
+/* Advanced & Unified Theme for EcoCleanUp Hub   */
+/* ============================================= */
+
 :root {
-    --primary: #0a6c74; /* main teal color */
-    --primary-dark: #08545a; /* darker hover state */
-    --primary-light: #4db8c4; /* lighter accent */
-    --bg-soft: #f5fcfe; /* very light cyan background */
-    --text-dark: #1a3c40;
-    --text-muted: #5f7a7d;
+    /* Primary teal palette (main brand color) */
+    --primary: #0a6c74;           /* Deep teal */
+    --primary-dark: #08545a;      /* Darker hover */
+    --primary-darker: #063e44;    /* Even darker for active/pressed */
+    --primary-light: #4db8c4;     /* Lighter accent */
+    --primary-lighter: #a0e0e8;   /* Very light accent */
+
+    /* Secondary colors (green tones for eco feel) */
+    --secondary: #2e7d32;         /* Forest green */
+    --success: #4caf50;           /* Success green */
+    --warning: #ff9800;           /* Warning orange */
+    --danger: #e53935;            /* Danger red */
+
+    /* Neutral palette */
+    --bg-soft: #f5fcfe;           /* Very light cyan background */
+    --bg-light: #e8f5f8;          /* Slightly darker soft bg */
+    --bg-card: #ffffff;           /* Card background */
+    --text-dark: #1a3c40;         /* Dark text */
+    --text-muted: #5f7a7d;        /* Muted text */
+    --text-light: #8fa5a8;        /* Very light text */
+    --border-light: #d1e8eb;      /* Light borders */
+
+    /* Shadows & elevations */
     --shadow-sm: 0 4px 16px rgba(10, 108, 116, 0.08);
     --shadow-md: 0 10px 32px rgba(10, 108, 116, 0.12);
+    --shadow-lg: 0 20px 48px rgba(10, 108, 116, 0.15);
+
+    /* Transitions */
+    --transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.18s ease;
+}
+
+/* Reset & base styles */
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -14,138 +45,211 @@ body {
     color: var(--text-dark);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     line-height: 1.6;
-}
-
-/* Make body a flex column container and at least full viewport height */
-body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
-/* Navbar styles */
+/* Navbar - more premium look */
 .navbar {
-    background: var(--primary) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    border-bottom: none;
+    box-shadow: var(--shadow-sm);
 }
 
-.navbar-brand,
-.nav-link {
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
     color: white !important;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.95) !important;
     font-weight: 500;
+    transition: var(--transition);
 }
 
 .nav-link:hover,
 .nav-link.active {
     color: var(--primary-light) !important;
+    transform: translateY(-1px);
 }
 
-/* Main content grows to fill available space, pushing footer down */
+/* Dropdown menu */
+.dropdown-menu {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    background-color: white;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-light);
+    color: var(--primary);
+}
+
+/* Main content */
 main {
-    flex: 1 0 auto; /* Key: grows to fill space */
-    padding-top: 4.5rem; /* Space for fixed navbar */
-    padding-bottom: 2rem;
+    flex: 1 0 auto;
+    padding-top: 5rem; /* Space for fixed navbar */
 }
 
-@media (max-width: 991.98px) {
-    main {
-        padding-top: 4rem;
-    }
-}
-
-/* Card styles */
+/* Cards - more premium with deeper shadows & hover effects */
 .card {
     border: none;
-    border-radius: 1.25rem;
+    border-radius: 1.5rem;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.28s ease;
+    background-color: white;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
 }
 
 .card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
 }
 
-/* Button styles */
+/* Buttons - more modern & elevated */
+.btn {
+    border-radius: 2rem;
+    padding: 0.65rem 1.8rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
 .btn-primary {
     background-color: var(--primary);
     border-color: var(--primary);
-    border-radius: 2rem;
-    padding: 0.65rem 1.8rem;
-    font-weight: 500;
-    transition: all 0.2s;
 }
 
 .btn-primary:hover {
     background-color: var(--primary-dark);
     border-color: var(--primary-dark);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(10, 108, 116, 0.3);
 }
 
 .btn-outline-primary {
     color: var(--primary);
     border-color: var(--primary);
-    border-radius: 2rem;
 }
 
 .btn-outline-primary:hover {
     background-color: var(--primary);
     color: white;
+    transform: translateY(-2px);
 }
 
-/* Utility classes */
-.text-primary {
-    color: var(--primary) !important;
-}
-
-.bg-primary {
-    background-color: var(--primary) !important;
-}
-
-.bg-primary-subtle {
-    background-color: rgba(10, 108, 116, 0.07) !important;
-}
-
-.border-primary {
-    border-color: var(--primary) !important;
-}
-
-/* Hero section - significantly reduced bottom spacing */
+/* Hero section - more premium gradient & spacing */
 .hero {
-    background: linear-gradient(135deg, #4db8c4 0%, #0a6c74 100%);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
     color: white;
-    padding: 5rem 1rem 2rem;
-    margin-bottom: 0.75rem;
-    border-radius: 0 0 2.5rem 2.5rem;
+    padding: 6rem 1rem 4rem;
+    margin-bottom: 1rem;
+    border-radius: 0 0 3rem 3rem;
     text-align: center;
+    box-shadow: var(--shadow-md);
 }
 
 .hero h1 {
-    font-weight: 700;
-    letter-spacing: -0.8px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .hero .lead {
     max-width: 720px;
-    margin: 1.5rem auto 1.5rem;
+    margin: 1.75rem auto;
     opacity: 0.95;
+    font-size: 1.25rem;
 }
 
-/* Footer - pushed to bottom by flex layout */
+/* Footer */
 footer {
-    background: var(--primary);
+    background: linear-gradient(to right, var(--primary), var(--primary-dark));
     color: white;
-    padding: 3rem 0 2rem;
-    margin-top: auto; /* Ensures footer stays at bottom when content is short */
+    padding: 3.5rem 0 2.5rem;
+    margin-top: auto;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 }
 
 footer a {
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
+    transition: var(--transition);
 }
 
 footer a:hover {
     color: white;
     text-decoration: underline;
+}
+
+/* Utility classes */
+.text-primary { color: var(--primary) !important; }
+.bg-primary { background-color: var(--primary) !important; }
+.bg-primary-subtle { background-color: rgba(10, 108, 116, 0.08) !important; }
+.border-primary { border-color: var(--primary) !important; }
+
+/* Alert enhancements */
+.alert {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Modal enhancements */
+.modal-content {
+    border-radius: 1.5rem;
+    border: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    border-bottom: none;
+    border-radius: 1.5rem 1.5rem 0 0;
+}
+
+/* Success family - fully coordinated with primary teal theme */
+.bg-success {
+    --bs-bg-opacity: 1;
+    background-color: var(--primary) !important;          /* Use primary color as background */
+}
+
+.text-success {
+    --bs-text-opacity: 1;
+    color: var(--primary-light) !important;               /* Use lighter primary for text */
+}
+
+.btn-success {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--primary);                          /* Button main color */
+    --bs-btn-border-color: var(--primary);
+
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--primary-dark);               /* Hover: darker shade */
+    --bs-btn-hover-border-color: var(--primary-dark);
+
+    --bs-btn-focus-shadow-rgb: 10, 108, 116;              /* Focus ring matches primary color */
+
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--primary-darker);            /* Active: even darker */
+    --bs-btn-active-border-color: var(--primary-darker);
+
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: var(--primary);
+    --bs-btn-disabled-border-color: var(--primary);
+
+    transition: var(--transition);
+    box-shadow: 0 4px 16px rgba(10, 108, 116, 0.25);      /* Initial shadow */
+}
+
+.btn-success:hover {
+    box-shadow: 0 8px 24px rgba(10, 108, 116, 0.4);       /* Hover: enhanced glow */
 }
