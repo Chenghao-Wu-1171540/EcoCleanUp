@@ -11,16 +11,18 @@ events_bp = Blueprint('events', __name__)
 @events_bp.route('/events')
 @login_required
 def list_events():
-    """Display list of upcoming events with optional filters"""
+    """Display list of upcoming events with optional filters and pagination"""
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    offset = (page - 1) * per_page
 
     location_filter = request.args.get('location', '').strip()
     date_filter = request.args.get('date', '')
 
-    query = """
-        SELECT e.*, u.full_name AS leader_name,
-               CASE WHEN er.volunteer_id IS NOT NULL THEN TRUE ELSE FALSE END AS registered
+    base_query = """
         FROM events e
         JOIN users u ON e.event_leader_id = u.user_id
         LEFT JOIN eventregistrations er 
@@ -30,24 +32,44 @@ def list_events():
     params = [session['user_id']]
 
     if location_filter:
-        query += " AND e.location ILIKE %s"
+        base_query += " AND e.location ILIKE %s"
         params.append(f"%{location_filter}%")
 
     if date_filter:
-        query += " AND e.event_date = %s"
+        base_query += " AND e.event_date = %s"
         params.append(date_filter)
 
-    query += " ORDER BY e.event_date, e.start_time"
+    count_query = f"SELECT COUNT(*) AS total {base_query}"
+    cur.execute(count_query, params)
+    total_events = cur.fetchone()['total']
+
+    query = f"""
+        SELECT e.*, u.full_name AS leader_name,
+               CASE WHEN er.volunteer_id IS NOT NULL THEN TRUE ELSE FALSE END AS registered
+        {base_query}
+        ORDER BY e.event_date, e.start_time
+        LIMIT %s OFFSET %s
+    """
+    params.extend([per_page, offset])
 
     cur.execute(query, params)
     events = cur.fetchall()
     cur.close()
 
+    total_pages = (total_events + per_page - 1) // per_page
+    has_prev = page > 1
+    has_next = page < total_pages
+
     return render_template('events.html',
                            events=events,
                            search_location=location_filter,
-                           search_date=date_filter)
-
+                           search_date=date_filter,
+                           page=page,
+                           total_pages=total_pages,
+                           has_prev=has_prev,
+                           has_next=has_next,
+                           per_page=per_page,
+                           total_events=total_events)  # ← 關鍵修正：加上 total_events
 
 @events_bp.route('/register/<int:event_id>', methods=['POST'])
 @login_required
