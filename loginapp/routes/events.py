@@ -16,7 +16,7 @@ def list_events():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 9, type=int)
     offset = (page - 1) * per_page
 
     location_filter = request.args.get('location', '').strip()
@@ -69,7 +69,7 @@ def list_events():
                            has_prev=has_prev,
                            has_next=has_next,
                            per_page=per_page,
-                           total_events=total_events)  # ← 關鍵修正：加上 total_events
+                           total_events=total_events)
 
 @events_bp.route('/register/<int:event_id>', methods=['POST'])
 @login_required
