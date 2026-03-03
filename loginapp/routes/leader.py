@@ -54,6 +54,7 @@ def create_event():
         description = request.form.get('description')
         supplies = request.form.get('supplies')
         safety = request.form.get('safety_instructions')
+        event_type = request.form.get('event_type')   # ← 新增這行
 
         conn = get_db()
         cur = conn.cursor()
@@ -62,10 +63,10 @@ def create_event():
             cur.execute("""
                 INSERT INTO events (
                     event_name, location, event_date, start_time, duration,
-                    description, supplies, safety_instructions, event_leader_id
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    description, supplies, safety_instructions, event_leader_id, event_type
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (event_name, location, event_date, start_time, int(duration),
-                  description, supplies, safety, session['user_id']))
+                  description, supplies, safety, session['user_id'], event_type))
             conn.commit()
             flash('Event created successfully!', 'success')
             return redirect(url_for('leader.my_events'))
@@ -82,11 +83,11 @@ def create_event():
 @login_required
 @role_required('event_leader')
 def edit_event(event_id):
-    """Edit an existing event (leader can edit own events, admin can edit all)"""
+    """Edit an existing event"""
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Check ownership or admin permission
+    # Check ownership...
     cur.execute("SELECT event_leader_id FROM events WHERE event_id = %s", (event_id,))
     event = cur.fetchone()
     if not event or (session['role'] != 'admin' and event['event_leader_id'] != session['user_id']):
@@ -96,71 +97,43 @@ def edit_event(event_id):
 
     if request.method == 'POST':
         try:
-            # Get form data
             event_name = request.form.get('event_name', '').strip()
             description = request.form.get('description', '').strip()
             location = request.form.get('location', '').strip()
             event_date = request.form.get('event_date')
             start_time = request.form.get('start_time')
             duration = request.form.get('duration', type=int)
-            max_volunteers = request.form.get('max_volunteers', type=int)
+            event_type = request.form.get('event_type')          # ← 新增這行
 
-            # Basic validation
             if not all([event_name, location, event_date, start_time, duration]):
                 flash('Please fill in all required fields', 'danger')
                 return redirect(request.url)
 
-            if duration <= 0:
-                flash('Duration must be positive', 'danger')
-                return redirect(request.url)
-
-            if max_volunteers is not None and max_volunteers <= 0:
-                flash('Max volunteers must be positive', 'danger')
-                return redirect(request.url)
-
-            # Update event
             update_query = """
                 UPDATE events
-                SET event_name = %s,
-                    description = %s,
-                    location = %s,
-                    event_date = %s,
-                    start_time = %s,
-                    duration = %s,
-                    max_volunteers = %s
+                SET event_name = %s, description = %s, location = %s,
+                    event_date = %s, start_time = %s, duration = %s,
+                    event_type = %s
                 WHERE event_id = %s
             """
             cur.execute(update_query, (
-                event_name,
-                description or None,
-                location,
-                event_date,
-                start_time,
-                duration,
-                max_volunteers or None,
-                event_id
+                event_name, description or None, location, event_date,
+                start_time, duration, event_type, event_id
             ))
 
             conn.commit()
             flash('Event updated successfully', 'success')
-            return redirect(url_for('events.event_detail', event_id=event_id))
+            return redirect(url_for('leader.event_detail', event_id=event_id))
 
         except Exception as e:
             conn.rollback()
             flash(f'Failed to update event: {str(e)}', 'danger')
-            print(f"Edit event error: {e}")
-
         finally:
-            # Always close cursor
             cur.close()
 
-    # GET: fetch current event data for form prefill
-    cur.execute("""
-        SELECT * FROM events 
-        WHERE event_id = %s
-    """, (event_id,))
+    # GET: fetch current data
+    cur.execute("SELECT * FROM events WHERE event_id = %s", (event_id,))
     event_data = cur.fetchone()
-
     cur.close()
 
     if not event_data:
@@ -250,44 +223,26 @@ def mark_attendance(event_id, volunteer_id):
 @login_required
 @role_required('event_leader', 'admin')
 def cancel_event(event_id):
-    """Cancel an event (only by owner or admin)"""
     conn = get_db()
     cur = conn.cursor()
-
     try:
-        # Check if event exists and ownership
-        cur.execute("""
-                    SELECT event_leader_id
-                    FROM events
-                    WHERE event_id = %s
-                    """, (event_id,))
+        # Check ownership
+        cur.execute("SELECT event_leader_id FROM events WHERE event_id = %s", (event_id,))
         owner = cur.fetchone()
-
-        if not owner:
-            flash('Event not found', 'danger')
+        if not owner or (session['role'] != 'admin' and owner[0] != session['user_id']):
+            flash('Permission denied', 'danger')
             return redirect(url_for('leader.my_events'))
 
-        if session['role'] != 'admin' and owner[0] != session['user_id']:
-            flash('Permission denied - you are not the owner of this event', 'danger')
-            return redirect(url_for('leader.my_events'))
-
-        # Delete related registrations first (due to foreign key constraints)
+        # Soft cancel + remove registrations
+        cur.execute("UPDATE events SET event_status = 'cancelled' WHERE event_id = %s", (event_id,))
         cur.execute("DELETE FROM eventregistrations WHERE event_id = %s", (event_id,))
-
-        # Delete the event itself
-        cur.execute("DELETE FROM events WHERE event_id = %s", (event_id,))
-
         conn.commit()
-        flash('Event has been cancelled successfully. All registrations removed.', 'success')
-
+        flash('Event cancelled successfully (soft delete). All registrations removed.', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Failed to cancel event: {str(e)}', 'danger')
-        print(f"Cancel event error: {e}")  # For debugging
-
     finally:
         cur.close()
-
     return redirect(url_for('leader.my_events'))
 
 @leader_bp.route('/remove_volunteer/<int:event_id>/<int:volunteer_id>', methods=['POST'])

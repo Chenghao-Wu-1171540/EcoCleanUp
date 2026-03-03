@@ -12,6 +12,8 @@ events_bp = Blueprint('events', __name__)
 @login_required
 def list_events():
     """Display list of upcoming events with optional filters and pagination"""
+    from datetime import date   # ← add this import if not already present
+
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -21,6 +23,7 @@ def list_events():
 
     location_filter = request.args.get('location', '').strip()
     date_filter = request.args.get('date', '')
+    event_type_filter = request.args.get('event_type', '').strip()   # ← add support if you want type filter
 
     base_query = """
         FROM events e
@@ -28,6 +31,7 @@ def list_events():
         LEFT JOIN eventregistrations er 
                ON e.event_id = er.event_id AND er.volunteer_id = %s
         WHERE e.event_date >= CURRENT_DATE
+        AND e.event_status != 'cancelled'
     """
     params = [session['user_id']]
 
@@ -38,6 +42,10 @@ def list_events():
     if date_filter:
         base_query += " AND e.event_date = %s"
         params.append(date_filter)
+
+    if event_type_filter:
+        base_query += " AND e.event_type = %s"
+        params.append(event_type_filter)
 
     count_query = f"SELECT COUNT(*) AS total {base_query}"
     cur.execute(count_query, params)
@@ -51,25 +59,19 @@ def list_events():
         LIMIT %s OFFSET %s
     """
     params.extend([per_page, offset])
-
     cur.execute(query, params)
     events = cur.fetchall()
+
     cur.close()
 
-    total_pages = (total_events + per_page - 1) // per_page
-    has_prev = page > 1
-    has_next = page < total_pages
+    today = date.today()
 
     return render_template('events.html',
                            events=events,
-                           search_location=location_filter,
-                           search_date=date_filter,
                            page=page,
-                           total_pages=total_pages,
-                           has_prev=has_prev,
-                           has_next=has_next,
                            per_page=per_page,
-                           total_events=total_events)
+                           total_events=total_events,
+                           today=today)
 
 @events_bp.route('/register/<int:event_id>', methods=['POST'])
 @login_required
@@ -90,6 +92,7 @@ def register_event(event_id):
             SELECT event_id, event_date, start_time, duration, event_name
             FROM events 
             WHERE event_id = %s AND event_date >= CURRENT_DATE
+                AND event_status != 'cancelled'
         """, (event_id,))
         event = cur.fetchone()
 
@@ -106,6 +109,7 @@ def register_event(event_id):
               AND e.event_date = %s
               AND e.start_time < (%s + interval '1 minute' * %s)
               AND (e.start_time + interval '1 minute' * e.duration) > %s
+              AND e.event_status != 'cancelled'
             LIMIT 1
         """
         cur.execute(conflict_query, (
@@ -163,6 +167,7 @@ def my_event_detail(event_id):
         JOIN eventregistrations er ON e.event_id = er.event_id
         LEFT JOIN feedback f ON e.event_id = f.event_id AND er.volunteer_id = f.volunteer_id
         WHERE e.event_id = %s AND er.volunteer_id = %s
+            AND e.event_status != 'cancelled'
     """
     cur.execute(query, (event_id, session['user_id']))
     event = cur.fetchone()

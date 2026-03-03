@@ -4,23 +4,34 @@
 {% block content %}
 
 <div class="container mt-4">
-    <!-- Page title -->
     <h2 class="mb-4 text-success text-center text-md-start">
         <i class="bi bi-search me-2"></i>Browse Upcoming Clean-up Events
     </h2>
 
     <!-- Filter form -->
     <form method="GET" action="{{ url_for('events.list_events') }}" class="row g-3 mb-5">
-        <div class="col-12 col-md-5">
+        <div class="col-12 col-md-4">
             <input type="text" name="location" class="form-control form-control-lg"
                    placeholder="Search by location (e.g. Sumner, Rolleston...)"
                    value="{{ request.args.get('location', '') }}">
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <input type="date" name="date" class="form-control form-control-lg"
                    value="{{ request.args.get('date', '') }}">
         </div>
         <div class="col-12 col-md-3">
+            <select name="event_type" class="form-select form-select-lg">
+                <option value="">All Event Types</option>
+                <option value="Beach Clean-up"    {% if request.args.get('event_type') == 'Beach Clean-up'    %}selected{% endif %}>Beach Clean-up</option>
+                <option value="River Clean-up"    {% if request.args.get('event_type') == 'River Clean-up'    %}selected{% endif %}>River Clean-up</option>
+                <option value="Park Restoration"  {% if request.args.get('event_type') == 'Park Restoration'  %}selected{% endif %}>Park Restoration</option>
+                <option value="Track Maintenance" {% if request.args.get('event_type') == 'Track Maintenance' %}selected{% endif %}>Track Maintenance</option>
+                <option value="Community Event"   {% if request.args.get('event_type') == 'Community Event'   %}selected{% endif %}>Community Event</option>
+                <option value="Campus Clean"      {% if request.args.get('event_type') == 'Campus Clean'      %}selected{% endif %}>Campus Clean</option>
+                <option value="Other"             {% if request.args.get('event_type') == 'Other'             %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2">
             <button type="submit" class="btn btn-success btn-lg w-100">
                 <i class="bi bi-filter me-2"></i>Filter
             </button>
@@ -28,70 +39,55 @@
     </form>
 
     {% if events %}
-    <!-- Pagination info and per-page selector -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-        <p class="text-muted mb-0 text-center text-md-start">
-            Showing {{ (page-1)*per_page + 1 }} -
-            {% if page * per_page > total_events %}
-                {{ total_events }}
-            {% else %}
-                {{ page * per_page }}
-            {% endif %}
-            of {{ total_events }} events
-        </p>
-
-        <div class="d-flex align-items-center">
-            <label for="perPage" class="form-label me-2 text-muted small">Per page:</label>
-            <select id="perPage" class="form-select form-select-sm w-auto" onchange="window.location.href = this.value;">
-                <option value="{{ url_for('events.list_events', page=1, per_page=9, location=request.args.get('location'), date=request.args.get('date')) }}" {% if per_page == 9 %}selected{% endif %}>9</option>
-                <option value="{{ url_for('events.list_events', page=1, per_page=18, location=request.args.get('location'), date=request.args.get('date')) }}" {% if per_page == 18 %}selected{% endif %}>18</option>
-                <option value="{{ url_for('events.list_events', page=1, per_page=27, location=request.args.get('location'), date=request.args.get('date')) }}" {% if per_page == 27 %}selected{% endif %}>27</option>
-                <option value="{{ url_for('events.list_events', page=1, per_page=36, location=request.args.get('location'), date=request.args.get('date')) }}" {% if per_page == 36 %}selected{% endif %}>36</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- Event cards grid -->
     <div class="row g-4">
         {% for event in events %}
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-success-subtle transition-all hover-lift event-card position-relative"
-                 data-bs-toggle="modal"
-                 data-bs-target="#eventDetailModal"
-                 data-event-id="{{ event.event_id }}"
-                 data-event-name="{{ event.event_name | e }}"
-                 data-event-location="{{ event.location | e }}"
-                 data-event-date="{{ event.event_date.strftime('%Y-%m-%d') }}"
-                 data-event-time="{{ event.start_time.strftime('%H:%M') if event.start_time else 'N/A' }}"
-                 data-event-duration="{{ event.duration }}"
-                 data-event-leader="{{ event.leader_name | e or 'N/A' }}"
-                 data-event-registered="{{ 'Yes' if event.registered else 'No' }}">
-                <div class="card-body d-flex flex-column p-4">
-                    <h5 class="card-title text-success mb-3">{{ event.event_name }}</h5>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow border-success-subtle rounded-4 d-flex flex-column" style="min-height: 380px;">
+                <div class="card-body p-4 d-flex flex-column">
 
-                    <p class="mb-2">
-                        <i class="bi bi-geo-alt-fill me-1 text-muted"></i> {{ event.location }}
-                    </p>
-                    <p class="mb-2">
-                        <i class="bi bi-calendar-event me-1 text-muted"></i>
-                        {{ event.event_date.strftime('%Y-%m-%d') }}
-                    </p>
-                    <p class="mb-3">
-                        <i class="bi bi-clock me-1 text-muted"></i>
-                        {{ event.start_time.strftime('%H:%M') if event.start_time else 'N/A' }} • {{ event.duration }} min
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <h5 class="card-title text-success mb-0 flex-grow-1">
+                            {{ event.event_name }}
+                        </h5>
+                        <span class="badge bg-info fs-7 px-2 py-1">{{ event.event_type }}</span>
+                        {% if event.event_status == 'cancelled' %}
+                        <span class="badge bg-danger fs-7 px-2 py-1">Cancelled</span>
+                        {% elif event.event_status == 'completed' %}
+                        <span class="badge bg-secondary fs-7 px-2 py-1">Completed</span>
+                        {% elif event.event_status == 'ongoing' %}
+                        <span class="badge bg-warning fs-7 px-2 py-1">Ongoing</span>
+                        {% else %}
+                        <span class="badge bg-success fs-7 px-2 py-1">Upcoming</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="card-text text-muted small mb-4 flex-grow-1">
+                        <i class="bi bi-geo-alt-fill me-1 text-success"></i> {{ event.location }}<br>
+                        <i class="bi bi-calendar-event me-1 text-success"></i> {{ event.event_date.strftime('%Y-%m-%d') }}<br>
+                        <i class="bi bi-clock me-1 text-success"></i> {{ event.start_time.strftime('%H:%M') }} • {{ event.duration }} min<br>
+                        <i class="bi bi-person-fill me-1 text-success"></i> Leader: {{ event.leader_name }}
                     </p>
 
+                    <!-- 按钮区域 -->
                     <div class="mt-auto">
                         {% if event.registered %}
-                        <span class="badge bg-success fs-6 px-4 py-2 w-100 text-center">
-                            <i class="bi bi-check-circle me-1"></i>Registered
-                        </span>
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm w-100 rounded-pill"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmUnregisterModal"
+                                data-event-name="{{ event.event_name }}"
+                                data-event-id="{{ event.event_id }}">
+                            <i class="bi bi-x-circle me-1"></i>Cancel Participation
+                        </button>
                         {% else %}
-                        <form action="{{ url_for('events.register_event', event_id=event.event_id) }}" method="POST">
-                            <button type="submit" class="btn btn-outline-success w-100 rounded-pill">
-                                <i class="bi bi-plus-circle me-1"></i>Register Now
-                            </button>
-                        </form>
+                        <button type="button"
+                                class="btn btn-success btn-sm w-100 rounded-pill"
+                                data-bs-toggle="modal"
+                                data-bs-target="#confirmRegisterModal"
+                                data-event-name="{{ event.event_name }}"
+                                data-event-id="{{ event.event_id }}">
+                            <i class="bi bi-plus-circle me-1"></i>Join Event
+                        </button>
                         {% endif %}
                     </div>
                 </div>
@@ -100,170 +96,86 @@
         {% endfor %}
     </div>
 
-    <!-- Pagination navigation -->
-    {% if total_pages > 1 %}
-    <nav aria-label="Events pagination" class="mt-5">
-        <ul class="pagination pagination-sm justify-content-center flex-wrap">
-            <!-- Previous -->
-            <li class="page-item {% if not has_prev %}disabled{% endif %}">
-                <a class="page-link rounded-pill me-1 px-3 py-2" href="{{ url_for('events.list_events', page=page-1, per_page=per_page, location=request.args.get('location'), date=request.args.get('date')) if has_prev else '#' }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page-1 }}{% for k in ['location','date','event_type'] %}{% if request.args.get(k) %}&{{k}}={{ request.args.get(k) }}{% endif %}{% endfor %}">Previous</a>
             </li>
-
-            <!-- Page numbers -->
-            {% set start_page = page - 2 if page - 2 > 0 else 1 %}
-            {% set end_page = page + 2 if page + 2 <= total_pages else total_pages %}
-            {% for p in range(start_page, end_page + 1) %}
-            <li class="page-item {% if p == page %}active{% endif %}">
-                <a class="page-link rounded-pill mx-1 px-3 py-2" href="{{ url_for('events.list_events', page=p, per_page=per_page, location=request.args.get('location'), date=request.args.get('date')) }}">
-                    {{ p }}
-                </a>
+            {% endif %}
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ page }} of {{ ((total_events + per_page - 1) // per_page) or 1 }}</span>
             </li>
-            {% endfor %}
-
-            <!-- Next -->
-            <li class="page-item {% if not has_next %}disabled{% endif %}">
-                <a class="page-link rounded-pill ms-1 px-3 py-2" href="{{ url_for('events.list_events', page=page+1, per_page=per_page, location=request.args.get('location'), date=request.args.get('date')) if has_next else '#' }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
+            {% if page * per_page < total_events %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page+1 }}{% for k in ['location','date','event_type'] %}{% if request.args.get(k) %}&{{k}}={{ request.args.get(k) }}{% endif %}{% endfor %}">Next</a>
             </li>
+            {% endif %}
         </ul>
     </nav>
-    {% endif %}
 
     {% else %}
-    <div class="alert alert-info text-center py-5 my-5 rounded-4 shadow-sm">
+    <div class="alert alert-info text-center py-5 rounded-4 shadow-sm">
         <i class="bi bi-info-circle-fill me-2 fs-4"></i>
-        No matching events found. Try adjusting your filters.
+        No upcoming events found matching your criteria.
     </div>
     {% endif %}
-
-    <div class="text-center mt-5">
-        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-lg rounded-pill">
-            <i class="bi bi-arrow-left me-1"></i>Back to Home
-        </a>
-    </div>
 </div>
 
-<!-- Event Detail Modal -->
-<div class="modal fade" id="eventDetailModal" tabindex="-1" aria-labelledby="eventDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content rounded-5 shadow-xl border-0 overflow-hidden">
-            <div class="modal-header bg-success text-white border-0 py-4">
-                <h5 class="modal-title fw-bold" id="eventDetailModalLabel">Event Details</h5>
+{% endblock %}
+
+{% block scripts %}
+
+<div class="modal fade" id="confirmRegisterModal" tabindex="-1" aria-labelledby="confirmRegisterLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-5 shadow-lg border-0">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="confirmRegisterLabel">
+                    <i class="bi bi-check-circle-fill me-2"></i>Confirm Registration
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4 p-md-5">
-                <h4 class="text-success mb-4" id="modalEventName"></h4>
-
-                <div class="row g-4">
-                    <div class="col-md-8">
-                        <p class="mb-3">
-                            <i class="bi bi-geo-alt-fill me-2 text-muted"></i>
-                            <strong>Location:</strong> <span id="modalLocation"></span>
-                        </p>
-                        <p class="mb-3">
-                            <i class="bi bi-calendar-event me-2 text-muted"></i>
-                            <strong>Date:</strong> <span id="modalDate"></span>
-                        </p>
-                        <p class="mb-3">
-                            <i class="bi bi-clock me-2 text-muted"></i>
-                            <strong>Time:</strong> <span id="modalTime"></span> • <span id="modalDuration"></span> min
-                        </p>
-                        <p class="mb-3">
-                            <i class="bi bi-person-fill me-2 text-muted"></i>
-                            <strong>Leader:</strong> <span id="modalLeader"></span>
-                        </p>
-                        <p class="mb-0">
-                            <i class="bi bi-check-circle me-2 text-muted"></i>
-                            <strong>Registered:</strong> <span id="modalRegistered"></span>
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <div class="bg-success-subtle rounded-4 p-4">
-                            <i class="bi bi-image fs-1 text-success mb-3 d-block"></i>
-                            <p class="text-muted mb-0">Event Image / Map Placeholder</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-body text-center py-4">
+                <p class="lead mb-3">Do you want to join</p>
+                <p class="fw-bold" id="modalRegisterEventName">this event?</p>
             </div>
-            <div class="modal-footer border-0 pb-5 justify-content-center">
-                <button type="button" class="btn btn-outline-secondary btn-lg px-5 rounded-pill" data-bs-dismiss="modal">
-                    Close
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">
+                    Cancel
                 </button>
-                <!-- Dynamic action button (Register or Cancel) -->
-                <button id="modalActionBtn" class="btn btn-lg px-5 rounded-pill d-none">
-                    <i class="bi me-1"></i><span id="modalActionText"></span>
+                <button type="button" class="btn btn-success px-4 rounded-pill" id="confirmRegisterBtn">
+                    Yes, Join Now
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-{% endblock %}
-
-{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('eventDetailModal');
-        const modalEventName = document.getElementById('modalEventName');
-        const modalLocation = document.getElementById('modalLocation');
-        const modalDate = document.getElementById('modalDate');
-        const modalTime = document.getElementById('modalTime');
-        const modalDuration = document.getElementById('modalDuration');
-        const modalLeader = document.getElementById('modalLeader');
-        const modalRegistered = document.getElementById('modalRegistered');
-        const modalActionBtn = document.getElementById('modalActionBtn');
-        const modalActionText = document.getElementById('modalActionText');
+// 处理注册和取消弹窗的公共逻辑
+document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-bs-target="#confirmUnregisterModal"], [data-bs-target="#confirmRegisterModal"]');
+    if (!btn) return;
 
-        modal.addEventListener('show.bs.modal', function (event) {
-            const card = event.relatedTarget.closest('.event-card');
-            if (!card) return;
+    const isRegister = btn.getAttribute('data-bs-target') === '#confirmRegisterModal';
+    const eventName = btn.getAttribute('data-event-name');
+    const eventId   = btn.getAttribute('data-event-id');
 
-            // Fill modal details
-            modalEventName.textContent = card.getAttribute('data-event-name') || 'Event Details';
-            modalLocation.textContent = card.getAttribute('data-event-location') || 'N/A';
-            modalDate.textContent = card.getAttribute('data-event-date') || 'N/A';
-            modalTime.textContent = card.getAttribute('data-event-time') || 'N/A';
-            modalDuration.textContent = card.getAttribute('data-event-duration') || 'N/A';
-            modalLeader.textContent = card.getAttribute('data-event-leader') || 'N/A';
-            modalRegistered.textContent = card.getAttribute('data-event-registered') || 'No';
+    const modalEventName = document.getElementById(isRegister ? 'modalRegisterEventName' : 'modalEventName');
+    const confirmBtn     = document.getElementById(isRegister ? 'confirmRegisterBtn'     : 'confirmUnregisterBtn');
 
-            // Determine action button (Register or Cancel)
-            const isRegistered = card.getAttribute('data-event-registered') === 'Yes';
-            const eventId = card.getAttribute('data-event-id');
+    if (modalEventName) modalEventName.textContent = `"${eventName}"?`;
 
-            modalActionBtn.classList.remove('d-none', 'btn-success', 'btn-outline-danger');
-            modalActionBtn.classList.add(isRegistered ? 'btn-outline-danger' : 'btn-success');
-
-            modalActionText.textContent = isRegistered ? 'Cancel Participation' : 'Register Now';
-            modalActionBtn.innerHTML = `<i class="bi ${isRegistered ? 'bi-x-circle' : 'bi-plus-circle'} me-1"></i>` + modalActionText.textContent;
-
-            // Set action on click
-            modalActionBtn.onclick = function () {
-                if (isRegistered) {
-                    // Trigger unregister confirmation modal
-                    const unregisterModal = new bootstrap.Modal(document.getElementById('confirmUnregisterModal'));
-                    document.getElementById('modalEventName').textContent = `"${card.getAttribute('data-event-name')}"?`;
-                    document.getElementById('confirmUnregisterBtn').onclick = function () {
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = `/unregister/${eventId}`;
-                        document.body.appendChild(form);
-                        form.submit();
-                    };
-                    unregisterModal.show();
-                } else {
-                    // Direct register
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `/register/${eventId}`;
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            };
-        });
-    });
+    if (confirmBtn) {
+        confirmBtn.onclick = () => {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = isRegister ? `/register/${eventId}` : `/unregister/${eventId}`;
+            document.body.appendChild(form);
+            form.submit();
+        };
+    }
+});
 </script>
 {% endblock %}

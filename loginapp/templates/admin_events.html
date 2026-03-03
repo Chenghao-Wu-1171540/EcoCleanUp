@@ -15,6 +15,7 @@
             <thead class="table-success">
                 <tr>
                     <th>Event Name</th>
+                    <th>Type</th>
                     <th>Date</th>
                     <th>Location</th>
                     <th>Leader</th>
@@ -27,17 +28,24 @@
                 {% for event in events %}
                 <tr>
                     <td>{{ event.event_name }}</td>
+                    <td>
+                        <span class="badge bg-info">{{ event.event_type }}</span>
+                    </td>
                     <td>{{ event.event_date.strftime('%Y-%m-%d') }}</td>
                     <td>{{ event.location }}</td>
                     <td>{{ event.leader_name }}</td>
                     <td>{{ event.reg_count or 0 }}</td>
                     <td>
-                        {% if event.event_date > today %}
-                            <span class="badge bg-primary">Upcoming</span>
-                        {% elif event.event_date == today %}
-                            <span class="badge bg-warning">Today</span>
+                        {% if event.event_status == 'cancelled' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                        {% elif event.event_status == 'completed' %}
+                        <span class="badge bg-secondary">Completed</span>
+                        {% elif event.event_date < today %}
+                        <span class="badge bg-secondary">Expired</span>
+                        {% elif event.event_status == 'ongoing' %}
+                        <span class="badge bg-warning">Ongoing</span>
                         {% else %}
-                            <span class="badge bg-secondary">Past</span>
+                        <span class="badge bg-success">Upcoming</span>
                         {% endif %}
                     </td>
                     <td>
@@ -45,16 +53,17 @@
                            class="btn btn-sm btn-outline-primary me-1">
                             <i class="bi bi-eye me-1"></i>View
                         </a>
-                        {% if event.event_date >= today %}
+                        {% if event.event_status != 'cancelled' and event.event_date >= today %}
                         <a href="{{ url_for('leader.edit_event', event_id=event.event_id) }}"
                            class="btn btn-sm btn-outline-warning me-1">
                             <i class="bi bi-pencil me-1"></i>Edit
                         </a>
-                        <a href="{{ url_for('leader.cancel_event', event_id=event.event_id) }}"
-                           class="btn btn-sm btn-outline-danger"
-                           data-confirm="Are you sure you want to cancel this event? All registrations will be removed.">
-                            <i class="bi bi-trash me-1"></i>Cancel
-                        </a>
+                        <form action="{{ url_for('leader.cancel_event', event_id=event.event_id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Are you sure you want to cancel this event?');">
+                                <i class="bi bi-trash me-1"></i>Cancel
+                            </button>
+                        </form>
                         {% endif %}
                     </td>
                 </tr>
