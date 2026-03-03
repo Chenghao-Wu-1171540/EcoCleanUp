@@ -1,76 +1,104 @@
 {% extends "base.html" %}
-
 {% block title %}Edit Event - {{ event.event_name }}{% endblock %}
 
 {% block content %}
 
-<div class="container mt-4">
-    <h2 class="mb-4 text-success">
+<div class="container mt-5">
+    <!-- Page title -->
+    <h2 class="mb-4 text-success text-center">
         <i class="bi bi-pencil-square me-2"></i>Edit Event: {{ event.event_name }}
     </h2>
 
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-success">
-                <div class="card-header bg-success text-white">
+        <div class="col-lg-8 col-xl-7">
+            <div class="card shadow-lg border-success-subtle rounded-4 overflow-hidden">
+                <div class="card-header bg-success text-white text-center py-3">
                     <h5 class="mb-0">Update Event Details</h5>
                 </div>
-                <div class="card-body">
-                    <form method="POST">
+
+                <div class="card-body p-5">
+                    <form method="POST" novalidate>
+                        <!-- Hidden event_id -->
                         <input type="hidden" name="event_id" value="{{ event.event_id }}">
 
-                        <div class="mb-3">
-                            <label for="event_name" class="form-label fw-bold">Event Name *</label>
-                            <input type="text" class="form-control" id="event_name" name="event_name"
-                                   value="{{ event.event_name }}" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="location" class="form-label fw-bold">Location *</label>
-                            <input type="text" class="form-control" id="location" name="location"
-                                   value="{{ event.location }}" required>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="event_date" class="form-label fw-bold">Date *</label>
-                                <input type="date" class="form-control" id="event_date" name="event_date"
-                                       value="{{ event.event_date.strftime('%Y-%m-%d') }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="start_time" class="form-label fw-bold">Start Time *</label>
-                                <input type="time" class="form-control" id="start_time" name="start_time"
-                                       value="{{ event.start_time.strftime('%H:%M') if event.start_time else '' }}" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="duration" class="form-label fw-bold">Duration (minutes) *</label>
-                            <input type="number" class="form-control" id="duration" name="duration"
-                                   value="{{ event.duration }}" required min="30" max="480">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="description" class="form-label fw-bold">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4">{{ event.description or '' }}</textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="supplies" class="form-label fw-bold">Supplies Needed</label>
-                            <textarea class="form-control" id="supplies" name="supplies" rows="3">{{ event.supplies or '' }}</textarea>
-                        </div>
-
+                        <!-- Event Name -->
                         <div class="mb-4">
-                            <label for="safety_instructions" class="form-label fw-bold">Safety Instructions</label>
-                            <textarea class="form-control" id="safety_instructions" name="safety_instructions" rows="3">{{ event.safety_instructions or '' }}</textarea>
+                            <label for="event_name" class="form-label fw-bold text-dark">Event Name *</label>
+                            <input type="text" class="form-control form-control-lg rounded-pill" id="event_name" name="event_name"
+                                   value="{{ event.event_name }}" required placeholder="Enter event name">
+                            <div class="invalid-feedback">
+                                Please enter the event name.
+                            </div>
                         </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <!-- Location -->
+                        <div class="mb-4">
+                            <label for="location" class="form-label fw-bold text-dark">Location *</label>
+                            <input type="text" class="form-control form-control-lg rounded-pill" id="location" name="location"
+                                   value="{{ event.location }}" required placeholder="e.g. Sumner Beach, Christchurch">
+                            <div class="invalid-feedback">
+                                Please enter the location.
+                            </div>
+                        </div>
+
+                        <!-- Date & Time -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="event_date" class="form-label fw-bold text-dark">Date *</label>
+                                <input type="date" class="form-control form-control-lg rounded-pill" id="event_date" name="event_date"
+                                       value="{{ event.event_date.strftime('%Y-%m-%d') }}" required>
+                                <div class="invalid-feedback">
+                                    Please select a valid date.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="start_time" class="form-label fw-bold text-dark">Start Time *</label>
+                                <input type="time" class="form-control form-control-lg rounded-pill" id="start_time" name="start_time"
+                                       value="{{ event.start_time.strftime('%H:%M') if event.start_time else '' }}" required>
+                                <div class="invalid-feedback">
+                                    Please select a start time.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Duration -->
+                        <div class="mb-4">
+                            <label for="duration" class="form-label fw-bold text-dark">Duration (minutes) *</label>
+                            <input type="number" class="form-control form-control-lg rounded-pill" id="duration" name="duration"
+                                   value="{{ event.duration }}" required min="30" max="480" step="15">
+                            <div class="invalid-feedback">
+                                Duration must be between 30 and 480 minutes.
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-bold text-dark">Description</label>
+                            <textarea class="form-control rounded-3" id="description" name="description" rows="5">{{ event.description or '' }}</textarea>
+                            <small class="form-text text-muted">Optional: Provide details about the event.</small>
+                        </div>
+
+                        <!-- Supplies Needed -->
+                        <div class="mb-4">
+                            <label for="supplies" class="form-label fw-bold text-dark">Supplies Needed</label>
+                            <textarea class="form-control rounded-3" id="supplies" name="supplies" rows="3">{{ event.supplies or '' }}</textarea>
+                            <small class="form-text text-muted">Optional: List items participants should bring.</small>
+                        </div>
+
+                        <!-- Safety Instructions -->
+                        <div class="mb-4">
+                            <label for="safety_instructions" class="form-label fw-bold text-dark">Safety Instructions</label>
+                            <textarea class="form-control rounded-3" id="safety_instructions" name="safety_instructions" rows="3">{{ event.safety_instructions or '' }}</textarea>
+                            <small class="form-text text-muted">Optional: Important safety notes.</small>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
                             <a href="{{ url_for('leader.event_detail', event_id=event.event_id) }}"
-                               class="btn btn-outline-secondary">
+                               class="btn btn-outline-secondary btn-lg px-5 rounded-pill">
                                 Cancel
                             </a>
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill">
                                 <i class="bi bi-save me-2"></i>Save Changes
                             </button>
                         </div>

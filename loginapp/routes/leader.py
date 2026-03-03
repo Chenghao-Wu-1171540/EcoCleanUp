@@ -86,7 +86,7 @@ def edit_event(event_id):
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Check ownership or admin
+    # Check ownership or admin permission
     cur.execute("SELECT event_leader_id FROM events WHERE event_id = %s", (event_id,))
     event = cur.fetchone()
     if not event or (session['role'] != 'admin' and event['event_leader_id'] != session['user_id']):
@@ -95,14 +95,77 @@ def edit_event(event_id):
         return redirect(url_for('leader.my_events'))
 
     if request.method == 'POST':
-        # Update logic here (similar to create_event)
-        # ... (omitted for brevity, implement similar to create_event)
-        flash('Event updated successfully', 'success')
-        return redirect(url_for('leader.event_detail', event_id=event_id))
+        try:
+            # Get form data
+            event_name = request.form.get('event_name', '').strip()
+            description = request.form.get('description', '').strip()
+            location = request.form.get('location', '').strip()
+            event_date = request.form.get('event_date')
+            start_time = request.form.get('start_time')
+            duration = request.form.get('duration', type=int)
+            max_volunteers = request.form.get('max_volunteers', type=int)
 
-    cur.execute("SELECT * FROM events WHERE event_id = %s", (event_id,))
+            # Basic validation
+            if not all([event_name, location, event_date, start_time, duration]):
+                flash('Please fill in all required fields', 'danger')
+                return redirect(request.url)
+
+            if duration <= 0:
+                flash('Duration must be positive', 'danger')
+                return redirect(request.url)
+
+            if max_volunteers is not None and max_volunteers <= 0:
+                flash('Max volunteers must be positive', 'danger')
+                return redirect(request.url)
+
+            # Update event
+            update_query = """
+                UPDATE events
+                SET event_name = %s,
+                    description = %s,
+                    location = %s,
+                    event_date = %s,
+                    start_time = %s,
+                    duration = %s,
+                    max_volunteers = %s
+                WHERE event_id = %s
+            """
+            cur.execute(update_query, (
+                event_name,
+                description or None,
+                location,
+                event_date,
+                start_time,
+                duration,
+                max_volunteers or None,
+                event_id
+            ))
+
+            conn.commit()
+            flash('Event updated successfully', 'success')
+            return redirect(url_for('events.event_detail', event_id=event_id))
+
+        except Exception as e:
+            conn.rollback()
+            flash(f'Failed to update event: {str(e)}', 'danger')
+            print(f"Edit event error: {e}")
+
+        finally:
+            # Always close cursor
+            cur.close()
+
+    # GET: fetch current event data for form prefill
+    cur.execute("""
+        SELECT * FROM events 
+        WHERE event_id = %s
+    """, (event_id,))
     event_data = cur.fetchone()
+
     cur.close()
+
+    if not event_data:
+        flash('Event not found', 'danger')
+        return redirect(url_for('leader.my_events'))
 
     return render_template('edit_event.html', event=event_data)
 
