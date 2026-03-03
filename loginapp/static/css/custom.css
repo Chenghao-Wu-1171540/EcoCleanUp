@@ -253,3 +253,35 @@ footer a:hover {
 .btn-success:hover {
     box-shadow: 0 8px 24px rgba(10, 108, 116, 0.4);       /* Hover: enhanced glow */
 }
+
+/* 手机端登录弹窗优化 */
+@media (max-width: 576px) {
+    #loginModal .modal-dialog {
+        margin: 0.5rem;
+        max-width: 95vw !important;     /* 占满95%屏幕宽度 */
+        height: 90vh;                   /* 高度占90%屏幕，防止太高 */
+        overflow-y: auto;               /* 内容可滚动 */
+    }
+
+    #loginModal .modal-content {
+        border-radius: 1rem;            /* 保持圆角 */
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    #loginModal .modal-body {
+        padding: 1.5rem;                /* 手机端适当缩小内边距 */
+    }
+}
+
+/* 可选：让表单在手机端更紧凑 */
+@media (max-width: 576px) {
+    #loginModal .form-control {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+    }
+    #loginModal .btn {
+        font-size: 1.1rem;
+        padding: 0.75rem 1.5rem;
+    }
+}
