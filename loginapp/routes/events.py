@@ -148,6 +148,38 @@ def register_event(event_id):
 
     return redirect(url_for('events.list_events'))
 
+@events_bp.route('/event/<int:event_id>')
+@login_required
+def event_detail(event_id):
+    """Public event detail view - anyone logged in can see basic info"""
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+        SELECT e.*, u.full_name AS leader_name
+        FROM events e
+        JOIN users u ON e.event_leader_id = u.user_id
+        WHERE e.event_id = %s
+          AND e.event_status != 'cancelled'
+    """, (event_id,))
+    event = cur.fetchone()
+
+    if not event:
+        flash('Event not found or has been cancelled.', 'danger')
+        return redirect(url_for('events.list_events'))
+
+    # Optional: check if current user is already registered
+    cur.execute("""
+        SELECT 1 FROM eventregistrations 
+        WHERE event_id = %s AND volunteer_id = %s
+    """, (event_id, session['user_id']))
+    is_registered = bool(cur.fetchone())
+
+    cur.close()
+
+    return render_template('event_detail.html',
+                           event=event,
+                           is_registered=is_registered)
 
 @events_bp.route('/my_event_detail/<int:event_id>')
 @login_required

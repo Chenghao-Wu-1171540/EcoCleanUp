@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ event.event_name }} - EcoCleanUp Hub{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-success">
+        <i class="bi bi-calendar-event-fill me-2"></i>{{ event.event_name }}
+        <span class="badge bg-info ms-3">{{ event.event_type }}</span>
+        {% if event.event_status == 'cancelled' %}
+        <span class="badge bg-danger ms-2">Cancelled</span>
+        {% elif event.event_status == 'completed' %}
+        <span class="badge bg-secondary ms-2">Completed</span>
+        {% elif event.event_status == 'ongoing' %}
+        <span class="badge bg-warning ms-2">Ongoing</span>
+        {% else %}
+        <span class="badge bg-success ms-2">Upcoming</span>
+        {% endif %}
+    </h2>
+
+    <div class="card shadow-lg border-success-subtle rounded-4 overflow-hidden">
+        <div class="card-body p-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="lead mb-4">
+                        <i class="bi bi-geo-alt-fill me-1 text-success"></i> {{ event.location }}
+                    </p>
+                    <p class="mb-3">
+                        <i class="bi bi-calendar-event me-1 text-success"></i>
+                        Date: <strong>{{ event.event_date.strftime('%Y-%m-%d') }}</strong>
+                    </p>
+                    <p class="mb-3">
+                        <i class="bi bi-clock me-1 text-success"></i>
+                        Time: {{ event.start_time.strftime('%H:%M') }} • Duration: {{ event.duration }} minutes
+                    </p>
+                    <p class="mb-4">
+                        <i class="bi bi-person-fill me-1 text-success"></i>
+                        Organised by: {{ event.leader_name }}
+                    </p>
+
+                    {% if event.description %}
+                    <hr class="my-4">
+                    <p><strong>Description:</strong><br>{{ event.description | safe }}</p>
+                    {% endif %}
+
+                    {% if event.supplies %}
+                    <p><strong>Supplies needed:</strong><br>{{ event.supplies }}</p>
+                    {% endif %}
+
+                    {% if event.safety_instructions %}
+                    <p><strong>Safety instructions:</strong><br>{{ event.safety_instructions }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 text-center mt-5 mt-md-0">
+                    <!-- 加入 / 取消按鈕 -->
+                    {% if is_registered %}
+                    <button type="button" class="btn btn-outline-danger btn-lg w-100 rounded-pill mb-3"
+                            data-bs-toggle="modal" data-bs-target="#confirmUnregisterModal"
+                            data-event-name="{{ event.event_name }}" data-event-id="{{ event.event_id }}">
+                        <i class="bi bi-x-circle me-1"></i> Cancel Participation
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-success btn-lg w-100 rounded-pill mb-3"
+                            data-bs-toggle="modal" data-bs-target="#confirmRegisterModal"
+                            data-event-name="{{ event.event_name }}" data-event-id="{{ event.event_id }}">
+                        <i class="bi bi-plus-circle me-1"></i> Join Event
+                    </button>
+                    {% endif %}
+
+                    <a href="{{ url_for('events.list_events') }}" class="btn btn-outline-secondary w-100 rounded-pill">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 註冊確認彈窗 -->
+<div class="modal fade" id="confirmRegisterModal" tabindex="-1" aria-labelledby="confirmRegisterLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-5 shadow-lg border-0">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title" id="confirmRegisterLabel">
+                    <i class="bi bi-check-circle-fill me-2"></i> Confirm Registration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="lead mb-3">Do you want to join</p>
+                <p class="fw-bold" id="modalRegisterEventName">this event?</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success px-4 rounded-pill" id="confirmRegisterBtn">Yes, Join Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 取消參與確認彈窗 -->
+<div class="modal fade" id="confirmUnregisterModal" tabindex="-1" aria-labelledby="confirmUnregisterLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-5 shadow-lg border-0">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title" id="confirmUnregisterLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Cancellation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="lead mb-3">Are you sure you want to cancel participation in</p>
+                <p class="fw-bold" id="modalEventName">this event?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">No, Keep Registered</button>
+                <button type="button" class="btn btn-danger px-4 rounded-pill" id="confirmUnregisterBtn">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 處理註冊與取消彈窗的點擊邏輯
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-bs-target="#confirmRegisterModal"], [data-bs-target="#confirmUnregisterModal"]');
+    if (!btn) return;
+
+    const isRegister = btn.getAttribute('data-bs-target') === '#confirmRegisterModal';
+    const eventName = btn.getAttribute('data-event-name');
+    const eventId   = btn.getAttribute('data-event-id');
+
+    const modalEventName = document.getElementById(isRegister ? 'modalRegisterEventName' : 'modalEventName');
+    const confirmBtn     = document.getElementById(isRegister ? 'confirmRegisterBtn'     : 'confirmUnregisterBtn');
+
+    if (modalEventName) {
+        modalEventName.textContent = `"${eventName}"?`;
+    }
+
+    if (confirmBtn) {
+        confirmBtn.onclick = function() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = isRegister ? `/register/${eventId}` : `/unregister/${eventId}`;
+            document.body.appendChild(form);
+            form.submit();
+        };
+    }
+});
+</script>
+{% endblock %}
