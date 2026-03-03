@@ -249,7 +249,7 @@
                     document.getElementById('confirmUnregisterBtn').onclick = function () {
                         const form = document.createElement('form');
                         form.method = 'POST';
-                        form.action = `/events/unregister/${eventId}`;
+                        form.action = `/unregister/${eventId}`;
                         document.body.appendChild(form);
                         form.submit();
                     };
@@ -258,7 +258,7 @@
                     // Direct register
                     const form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = `/events/register/${eventId}`;
+                    form.action = `/register/${eventId}`;
                     document.body.appendChild(form);
                     form.submit();
                 }
