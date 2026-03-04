@@ -94,7 +94,6 @@ def change_password():
     return render_template('change_password.html')
 
 
-
 @user_bp.route('/my_participation')
 @login_required
 @role_required('volunteer')
@@ -102,48 +101,51 @@ def my_participation():
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    page = request.args.get('page', 1, type=int)
-    per_page = 6
-    offset = (page - 1) * per_page
+    status_filter = request.args.get('status', 'upcoming')
+    sort_by = request.args.get('sort', 'date_desc')
 
     query = """
         SELECT e.*, u.full_name AS leader_name,
-               er.attendance,
+               er.attendance AS attendance_status,
                CASE 
-                   WHEN er.attendance IS NULL AND e.event_date < CURRENT_DATE THEN 'pending_attendance'
-                   WHEN er.attendance IS NOT NULL THEN 'attended'
-                   ELSE 'upcoming'
-               END AS status,
-               f.rating,
-               f.comments AS feedback_comment,  -- Changed from f.comment to f.comments (plural)
-               f.rating IS NOT NULL AS has_feedback
+                   WHEN er.attendance = 'attended' THEN 'Attended'
+                   WHEN er.attendance = 'absent' THEN 'Absent'
+                   WHEN e.event_date >= CURRENT_DATE THEN 'Registered'
+                   ELSE 'Pending'
+               END AS display_status
         FROM events e
         JOIN eventregistrations er ON e.event_id = er.event_id
         JOIN users u ON e.event_leader_id = u.user_id
-        LEFT JOIN feedback f ON e.event_id = f.event_id AND er.volunteer_id = f.volunteer_id
         WHERE er.volunteer_id = %s
-        ORDER BY e.event_date DESC
-        LIMIT %s OFFSET %s
     """
-    cur.execute(query, (session['user_id'], per_page, offset))
-    events = cur.fetchall()
+    params = [session['user_id']]
 
-    count_query = """
-        SELECT COUNT(*) AS total
-        FROM eventregistrations er
-        WHERE er.volunteer_id = %s
-    """
-    cur.execute(count_query, (session['user_id'],))
-    total_events = cur.fetchone()['total']
+
+    if status_filter == 'upcoming':
+        query += " AND e.event_date >= CURRENT_DATE"
+    elif status_filter == 'past':
+        query += " AND e.event_date < CURRENT_DATE"
+
+
+    if sort_by == 'date_asc':
+        query += " ORDER BY e.event_date ASC"
+    elif sort_by == 'name':
+        query += " ORDER BY e.event_name ASC"
+    else:  # date_desc
+        query += " ORDER BY e.event_date DESC"
+
+    print("Debug SQL:", query)
+    print("Debug params:", params)
+
+    cur.execute(query, params)
+    events = cur.fetchall()
 
     cur.close()
 
-    has_more = len(events) == per_page
-
     return render_template('my_participation.html',
                            events=events,
-                           page=page,
-                           has_more=has_more)
+                           status_filter=status_filter,
+                           sort_by=sort_by)
 
 
 @user_bp.route('/submit_feedback/<int:event_id>', methods=['GET', 'POST'])

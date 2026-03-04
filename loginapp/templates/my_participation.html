@@ -4,107 +4,72 @@
 {% block content %}
 
 <div class="container mt-4">
-    <!-- Page title -->
     <h2 class="mb-4 text-success text-center text-md-start">
         <i class="bi bi-calendar-check me-2"></i>My Participation
     </h2>
 
-    <!-- Event list container -->
-    <div id="events-container" class="row g-4">
+    <form method="GET" class="row g-3 mb-5 align-items-end">
+        <div class="col-12 col-md-5 col-lg-4">
+            <label for="status" class="form-label small">Show</label>
+            <select name="status" id="status" class="form-select">
+                <option value="upcoming" {% if status_filter == 'upcoming' %}selected{% endif %}>Upcoming Events</option>
+                <option value="past"     {% if status_filter == 'past'     %}selected{% endif %}>Past / Expired Events</option>
+                <option value="all"      {% if status_filter == 'all'      %}selected{% endif %}>All Events</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-5 col-lg-4">
+            <label for="sort" class="form-label small">Sort by</label>
+            <select name="sort" id="sort" class="form-select">
+                <option value="date_desc" {% if sort_by == 'date_desc' %}selected{% endif %}>Date (Newest first)</option>
+                <option value="date_asc"  {% if sort_by == 'date_asc'  %}selected{% endif %}>Date (Oldest first)</option>
+                <option value="name"      {% if sort_by == 'name'      %}selected{% endif %}>Event Name (A-Z)</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-2 col-lg-2">
+            <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-filter me-1"></i> Apply
+            </button>
+        </div>
+    </form>
+
+    {% if events %}
+    <div class="row g-4">
         {% for event in events %}
-        <div class="col-12 col-md-6 col-lg-4 event-card">
-            <!-- Make entire card clickable to detail page -->
-            <a href="{{ url_for('events.my_event_detail', event_id=event.event_id) }}" class="text-decoration-none">
-                <div class="card h-100 shadow-sm border-success-subtle transition-all hover-lift position-relative">
-                    <!-- Status badge in top-right corner (small size) -->
-                    <div class="position-absolute top-0 end-0 m-2 z-10">
-                        {% if event.status == 'pending_attendance' %}
-                        <span class="badge bg-warning text-dark fs-7 px-2 py-1 rounded-pill shadow-sm">
-                            <i class="bi bi-hourglass-split me-1"></i>Pending
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow border-{% if 'Attended' in event.display_status %}success{% elif 'Absent' in event.display_status %}danger{% else %}primary{% endif %} rounded-4">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title text-success mb-0">
+                            {{ event.event_name }}
+                        </h5>
+                        <span class="badge bg-{% if 'Attended' in event.display_status %}success{% elif 'Absent' in event.display_status %}danger{% elif 'Registered' in event.display_status %}primary{% else %}warning{% endif %} fs-6 px-3 py-2">
+                            {{ event.display_status }}
                         </span>
-                        {% elif event.status == 'attended' %}
-                        <span class="badge bg-success fs-7 px-2 py-1 rounded-pill shadow-sm">
-                            <i class="bi bi-check-circle me-1"></i>Attended
-                        </span>
-                        {% else %}
-                        <span class="badge bg-info fs-7 px-2 py-1 rounded-pill shadow-sm">
-                            <i class="bi bi-calendar-event me-1"></i>Upcoming
-                        </span>
-                        {% endif %}
                     </div>
 
-                    <div class="card-body d-flex flex-column p-4">
-                        <h5 class="card-title text-success mb-3">{{ event.event_name }}</h5>
+                    <p class="card-text mb-3">
+                        <i class="bi bi-geo-alt-fill me-1 text-muted"></i> {{ event.location }}<br>
+                        <i class="bi bi-calendar-event me-1 text-muted"></i> {{ event.event_date.strftime('%Y-%m-%d') }}<br>
+                        <i class="bi bi-clock me-1 text-muted"></i> {{ event.start_time.strftime('%H:%M') }} • {{ event.duration }} min
+                    </p>
 
-                        <p class="mb-2">
-                            <i class="bi bi-geo-alt-fill me-1 text-muted"></i> {{ event.location }}
-                        </p>
-                        <p class="mb-2">
-                            <i class="bi bi-calendar-event me-1 text-muted"></i>
-                            {{ event.event_date.strftime('%Y-%m-%d') }}
-                        </p>
-                        <p class="mb-3">
-                            <i class="bi bi-clock me-1 text-muted"></i>
-                            {{ event.start_time.strftime('%H:%M') }} • {{ event.duration }} min
-                        </p>
-
-                        <!-- Your Feedback section at the bottom -->
-                        <div class="mt-3 pt-3 border-top border-success-subtle">
-                            <p class="text-muted mb-1 small fw-semibold">
-                                Your Feedback:
-                            </p>
-                            {% if event.has_feedback %}
-                            <p class="mb-2 text-success">
-                                <i class="bi bi-star-fill me-1"></i>Submitted
-                                {% if event.rating %}
-                                (Rating: {{ event.rating }}/5)
-                                {% endif %}
-                            </p>
-                            {% else %}
-                            <p class="mb-2 text-secondary">
-                                <i class="bi bi-star me-1"></i>Pending
-                            </p>
-                            {% endif %}
-
-                            <!-- Unregister button (only for upcoming/pending) -->
-                            {% if event.status != 'attended' %}
-                            <button type="button" class="btn btn-outline-danger btn-sm w-100 rounded-pill mt-2"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#confirmUnregisterModal"
-                                    data-event-name="{{ event.event_name }}"
-                                    data-event-id="{{ event.event_id }}">
-                                <i class="bi bi-x-circle me-1"></i>Cancel Participation
-                            </button>
-                            {% endif %}
-                        </div>
+                    <div class="mt-auto">
+                        <a href="{{ url_for('events.my_event_detail', event_id=event.event_id) }}"
+                           class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+                            <i class="bi bi-eye me-1"></i> View Details
+                        </a>
                     </div>
                 </div>
-            </a>
+            </div>
         </div>
         {% endfor %}
     </div>
-
-    <!-- Loading indicator -->
-    <div id="loading" class="text-center my-5" style="display: none;">
-        <div class="spinner-border text-success" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="text-muted mt-2">Loading more events...</p>
-    </div>
-
-    <!-- No more events -->
-    <div id="no-more" class="alert alert-info text-center py-4 my-5 rounded-4 shadow-sm" style="display: none;">
+    {% else %}
+    <div class="alert alert-info text-center py-5 rounded-4 shadow-sm">
         <i class="bi bi-info-circle-fill me-2 fs-4"></i>
-        No more events to load.
+        No participation records found matching your filter.
     </div>
+    {% endif %}
 </div>
 
-{% endblock %}
-
-{% block scripts %}
-<!-- Your custom.js is already loaded in base.html -->
-<!-- If you want to add page-specific logic, you can put it here -->
-<script>
-    // Optional: Add any page-specific JS if needed
-</script>
 {% endblock %}
